@@ -1,57 +1,71 @@
 import React from 'react';
 import {Alert, Button, StyleSheet, Text, View} from 'react-native';
 import {useAuth0, Auth0Provider} from 'react-native-auth0';
-import * as Notifications from 'expo-notifications';
+import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
+import LandingPage from './components/LandingPage';
+import Profile from './components/Profile';
+import Chores from './components/Chores';
+import Chat from './components/Chat';
+import Friends from './components/Friends';
+import Shopping from './components/Shopping';
+import Notifications from './components/Notifications';
 
-const config = {
-  clientId: "d1Kt5ewsVEilHku9d7vp1pC0h6TOTKME",
-  domain: "dev-vxzjazs4gxwtyfuv.eu.auth0.com"
-};
-
-const Home = () => {
-  const {authorize, clearSession, user, error, getCredentials} = useAuth0();
+const App = () => {
+  const [loggedIn, setIsLoggedIn] = React.useState(true);
+  const {authorize, clearSession, user, error} = useAuth0();
 
   const onLogin = async () => {
+    console.log("press");
     try {
-      const token = await Notifications.getExpoPushTokenAsync();
-      console.log(token.data);
+      setIsLoggedIn(true);
       await authorize({scope: 'openid profile email'}, {customScheme: 'auth0.com.auth0samples'});
-      let credentials = await getCredentials();
-      Alert.alert('AccessToken: ' + credentials.accessToken);
+      //
     } catch (e) {
       console.log(e);
     }
   };
 
-  const loggedIn = user !== undefined && user !== null;
-
   const onLogout = async () => {
     try {
+      setIsLoggedIn(false);
       await clearSession({customScheme: 'auth0.com.auth0samples'});
+      //
     } catch (e) {
       console.log('Log out cancelled');
     }
   };
 
-  return (
-    <View style={styles.container}>
-      <Text style={styles.header}> MyNewApp1 - Login </Text>
-      {user && <Text>YOU are logged in as {user.name}</Text>}
-      {!user && <Text>You are not logged in</Text>}
-      {error && <Text>{error.message}</Text>}
-      <Button
-        onPress={loggedIn ? onLogout : onLogin}
-        title={loggedIn ? 'Log Out' : 'Log In'}
-      />
-    </View>
-  );
-};
+  // const loggedIn = true;
 
-const App = () => {
+  const Stack = createStackNavigator();
+
   return (
-    <Auth0Provider domain={config.domain} clientId={config.clientId}>
-      <Home />
-    </Auth0Provider>
+    <NavigationContainer>
+      <Auth0Provider domain={"dev-vxzjazs4gxwtyfuv.eu.auth0.com"} clientId={"d1Kt5ewsVEilHku9d7vp1pC0h6TOTKME"}>
+        <View style={styles.container}>
+          {loggedIn ? (
+            <Stack.Navigator>
+              <Stack.Screen name="LandingPage" options={{headerShown: false}}>
+                {(props) => <LandingPage {...props} onLogout={onLogout} user={user} />}
+              </Stack.Screen>
+              <Stack.Screen name="Profile" component={Profile} options={{headerShown: false}}/>
+              <Stack.Screen name="Chat" component={Chat} options={{headerShown: false}}/>
+              <Stack.Screen name="Chores" component={Chores} options={{headerShown: false}}/>
+              <Stack.Screen name="Shopping" component={Shopping} options={{headerShown: false}}/>
+              <Stack.Screen name="Notifications" component={Notifications} options={{headerShown: false}}/>
+              <Stack.Screen name="Friends" component={Friends} options={{headerShown: false}}/>
+            </Stack.Navigator>
+          ) : (
+            <>
+              <Text style={styles.header}> Together - Login </Text>
+              <Text style={styles.header}> You are not logged in </Text>
+              <Button onPress={onLogin} title="Log In" />
+            </>
+          )}
+        </View>
+      </Auth0Provider>
+    </NavigationContainer>
   );
 };
 
@@ -59,7 +73,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
     backgroundColor: '#F5FCFF',
   },
   header: {
