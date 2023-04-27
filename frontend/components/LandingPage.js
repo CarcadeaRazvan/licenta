@@ -37,8 +37,7 @@ const CircleButton = ({ index, total, label }) => {
 };
 
 
-const LandingPage = ({ onLogout, user }) => {
-  const [loggedIn, setLoggedIn] = useState(true);
+const LandingPage = ({ navigation, onLogout }) => {
   const features = [
     { label: 'Profile' },
     { label: 'Chat' },
@@ -48,9 +47,9 @@ const LandingPage = ({ onLogout, user }) => {
     { label: 'Friends' },
   ];
 
-  const toggleLoggedIn = () => {
-    setLoggedIn(!loggedIn);
-  };
+  const handleLogout = () => {
+    onLogout();
+  }
 
   return (
     <View style={styles.container}>
@@ -63,7 +62,7 @@ const LandingPage = ({ onLogout, user }) => {
           label={feature.label}
         />
       ))}
-      <TouchableOpacity onPress={onLogout} style={styles.logoutButton}>
+      <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
         <Text style={styles.logoutButtonText}>Log out</Text>
       </TouchableOpacity>
     </View>
