@@ -14,29 +14,36 @@ import Login from './components/Login';
 
 const App = () => {
   const [loggedIn, setIsLoggedIn] = React.useState(false);
+  const [token, setToken] = React.useState(null);
 
   const Stack = createStackNavigator();
 
-  const handleLogin = () => {
+  const handleLogin = (token) => {
     setIsLoggedIn(true);
+    setToken(token);
   };
 
   const handleLogout = () => {
     setIsLoggedIn(false);
+    setToken(null);
   };
 
   return (
     <NavigationContainer>
         <View style={styles.container}>
-          {loggedIn ? (
+          {token ? (
             <Stack.Navigator>
               <Stack.Screen name="LandingPage" options={{headerShown: false}}>
                 {(props) => <LandingPage {...props} onLogout={handleLogout} />}
               </Stack.Screen>
-              <Stack.Screen name="Profile" component={Profile} options={{headerShown: false}}/>
+              <Stack.Screen name="Profile" options={{headerShown: false}}>
+                {(props) => <Profile {...props} token={token} />}
+              </Stack.Screen>
               <Stack.Screen name="Chat" component={Chat} options={{headerShown: false}}/>
               <Stack.Screen name="Chores" component={Chores} options={{headerShown: false}}/>
-              <Stack.Screen name="Shopping" component={Shopping} options={{headerShown: false}}/>
+              <Stack.Screen name="Shopping" options={{headerShown: false}}>
+                {(props) => <Shopping {...props} token={token} />}
+              </Stack.Screen>
               <Stack.Screen name="Notifications" component={Notifications} options={{headerShown: false}}/>
               <Stack.Screen name="Friends" component={Friends} options={{headerShown: false}}/>
             </Stack.Navigator>

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, Alert, StyleSheet } from 'react-native';
+import * as SecureStore from 'expo-secure-store';
 
 const Login = ({ navigation, onLogin }) => {
   const [username, setUsername] = useState('');
@@ -20,7 +21,8 @@ const Login = ({ navigation, onLogin }) => {
         const { access_token } = await response.json();
         // Alert.alert(access_token);
         console.log(access_token);
-        onLogin();
+        await SecureStore.setItemAsync('access_token', access_token);
+        onLogin(access_token);
         // Save the token in the app's state or in secure storage
       } else {
         // The login was unsuccessful, show an error message

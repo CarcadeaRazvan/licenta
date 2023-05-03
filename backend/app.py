@@ -3,18 +3,28 @@ from flask_jwt_extended import JWTManager, jwt_required, create_access_token, ge
 from flask_bcrypt import Bcrypt
 from flask_cors import CORS
 import psycopg2
+from flask_jwt_extended.exceptions import JWTExtendedException
+from flask_socketio import SocketIO, emit
+from datetime import timedelta
 
 app = Flask(__name__)
+app.config['JWT_SECRET_KEY'] = 'super-secret'  # Replace with a secure key in production
 CORS(app)
-
-app.config['JWT_SECRET_KEY'] = 'secret_key'
 jwt = JWTManager(app)
-
 bcrypt = Bcrypt(app)
+socketio = SocketIO(app, async_mode='threading')
 
-users = {
-    "john": bcrypt.generate_password_hash("password123").decode('utf-8')
-}
+@jwt.invalid_token_loader
+def handle_invalid_token(jwt_payload):
+    response = jsonify({'error': 'Invalid token'})
+    response.status_code = 401
+    return response
+
+@app.errorhandler(JWTExtendedException)
+def handle_jwt_error(error):
+    response = jsonify({'error': error.description})
+    response.status_code = error.status_code
+    return response
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -51,7 +61,7 @@ def login():
     if not bcrypt.check_password_hash(users.get(username), password):
         return jsonify({"msg": "Invalid username or password"}), 401
 
-    access_token = create_access_token(identity=username)
+    access_token = create_access_token(identity=username, expires_delta=timedelta(days=1))
     print(access_token)
     return jsonify(access_token=access_token), 200
 
@@ -69,7 +79,7 @@ def register():
     # Insert the user into the database
     try:
         conn = psycopg2.connect(
-            host="172.21.0.2",
+            host="172.22.0.2",
             database="mydatabase",
             user="postgres",
             password="admin",
@@ -89,12 +99,43 @@ def register():
     # Return a success message
     return jsonify({"msg": "User registered successfully"}), 201
 
-@app.route('/protected', methods=['GET'])
+@app.route('/profile', methods=['GET'])
 @jwt_required()
-def protected():
+def profile():
     current_user = get_jwt_identity()
+    if not current_user:
+        raise JWTExtendedException(description='Invalid token', status_code=401)
     return jsonify(logged_in_as=current_user), 200
 
+
+shopping_list = []
+
+@app.route('/shopping', methods=['GET'])
+@jwt_required()
+def get_shopping_list():
+    # Return the shopping list as a JSON array
+    return jsonify(shopping_list)
+
+@socketio.on('add_item')
+@jwt_required()
+def handle_add_item(data):
+    user_id = get_jwt_identity()
+    # Add the new item to the shopping list
+    shopping_list.append(data['item'])
+    # Emit a message to all connected clients with the updated shopping list
+    print("add_item")
+    emit('updateList', shopping_list, broadcast=True)
+
+@socketio.on('remove_item')
+@jwt_required()
+def handle_remove_item(data):
+    # Remove the item from the shopping list
+    index = data['index']
+    del shopping_list[index]
+    print("remove_item, " + index)
+    # Emit a message to all connected clients with the updated shopping list
+    emit('updateList', shopping_list, broadcast=True)
+
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    socketio.run(app, debug=False, host='0.0.0.0', port=5000)
 
