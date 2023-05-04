@@ -1,10 +1,35 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { useNavigation, withNavigation } from '@react-navigation/native';
-import { Button } from 'react-native';
+import React, { useState, useEffect } from "react";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { useNavigation, withNavigation } from "@react-navigation/native";
+import { Button } from "react-native";
 
-const Profile = () => {
+const Profile = ({ token }) => {
   const navigation = useNavigation();
+
+  const [userData, setUserData] = useState(null);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await fetch("http://192.168.1.128:5000/profile", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setUserData(data);
+        } else {
+          console.error("Error fetching user data");
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    fetchUserData();
+  }, [token]);
 
   const handleGoBack = () => {
     navigation.goBack();
@@ -20,7 +45,11 @@ const Profile = () => {
         <View style={styles.spacer} />
       </View>
       <View style={styles.content}>
-        <Text style={styles.text}>You have no profile yet.</Text>
+        {userData ? (
+          <Text>{`Logged in as ${userData.logged_in_as}`}</Text>
+        ) : (
+          <Text>Loading...</Text>
+        )}
       </View>
     </View>
   );
@@ -31,18 +60,18 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    backgroundColor: '#FFFFFF',
-    flexDirection: 'row',
-    alignItems: 'center',
+    backgroundColor: "#FFFFFF",
+    flexDirection: "row",
+    alignItems: "center",
     height: 80,
   },
   headerText: {
     flex: 1,
-    textAlign: 'center',
-    fontWeight: 'bold',
+    textAlign: "center",
+    fontWeight: "bold",
     fontSize: 25,
     marginTop: 50,
-    marginLeft: -15
+    marginLeft: -15,
   },
   backButton: {
     marginLeft: 30,
@@ -54,8 +83,8 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   text: {
     fontSize: 20,
