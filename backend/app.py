@@ -79,7 +79,7 @@ def register():
     # Insert the user into the database
     try:
         conn = psycopg2.connect(
-            host="172.22.0.2",
+            host="localhost",
             database="mydatabase",
             user="postgres",
             password="admin",
@@ -116,6 +116,13 @@ def get_shopping_list():
     # Return the shopping list as a JSON array
     return jsonify(shopping_list)
 
+@socketio.on('get_items')
+@jwt_required()
+def handle_get_items():
+    # Emit a message to all connected clients with the updated shopping list
+    print("get_items")
+    emit('updateList', shopping_list, broadcast=True)
+
 @socketio.on('add_item')
 @jwt_required()
 def handle_add_item(data):
@@ -132,7 +139,7 @@ def handle_remove_item(data):
     # Remove the item from the shopping list
     index = data['index']
     del shopping_list[index]
-    print("remove_item, " + index)
+    print("remove_item, " + str(index))
     # Emit a message to all connected clients with the updated shopping list
     emit('updateList', shopping_list, broadcast=True)
 
