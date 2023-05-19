@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -7,56 +7,186 @@ import {
   TextInput,
   Button,
   Alert,
+  Modal,
+  FlatList,
 } from "react-native";
+import { Switch } from "react-native";
 import { useNavigation, withNavigation } from "@react-navigation/native";
-import { io } from "socket.io-client";
 
-const ShoppingBody = ({ socket }) => {
+const ShoppingBody = ({ socket, token }) => {
   const navigation = useNavigation();
   const [item, setItem] = useState("");
-  const [shoppingList, setShoppingList] = useState([]);
-
-  //   console.log("txt");
+  const [shoppingLists, setShoppingLists] = useState([]);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [listName, setListName] = useState("");
+  const [selectedUsers, setSelectedUsers] = useState([]);
+  const [userData, setUserData] = useState("");
 
   useEffect(() => {
-    socket.on("updateList", (data) => {
-      setShoppingList(data);
+    const fetchUserData = async () => {
+      try {
+        const response = await fetch("http://192.168.1.128:5000/get_username", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setUserData(data);
+        } else {
+          console.error("Error fetching user data");
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    fetchUserData();
+  }, []);
+
+  const userDataRef = useRef(userData);
+
+  useEffect(() => {
+    userDataRef.current = userData;
+  }, [userData]);
+
+  useEffect(() => {
+    socket.emit("get_shared_lists");
+
+    socket.on("updateLists", (data) => {
+      if (data.listId) {
+        socket.emit("get_list_ids");
+
+        socket.on("listIds", (list_data) => {
+          if (list_data.currentUser == userDataRef.current) {
+            if (list_data.listIds.includes(data.listId)) {
+              socket.emit("get_list_from_ids", { list_data });
+
+              socket.on("listByIds", (list_by_data) => {
+                if (list_by_data.currentUser == userDataRef.current) {
+                  // console.log(list_by_data.shoppingLists);
+                  setShoppingLists(list_by_data.shoppingLists);
+                }
+              });
+            }
+          }
+        });
+      } else {
+        socket.emit("get_list_ids");
+
+        socket.on("listIds", (list_data) => {
+          if (list_data.currentUser == userDataRef.current) {
+            socket.emit("get_list_from_ids", { list_data });
+
+            socket.on("listByIds", (list_by_data) => {
+              if (list_by_data.currentUser == userDataRef.current) {
+                setShoppingLists(list_by_data.shoppingLists);
+              }
+            });
+          }
+        });
+      }
     });
 
     return () => {
-      console.log("return");
       socket.disconnect();
     };
   }, []);
 
-  const handleAddItem = () => {
-    if (!item) {
-      Alert.alert("Error", "Please enter an item");
-      return;
-    }
+  useEffect(() => {
+    console.log(shoppingLists);
+  }, [shoppingLists]);
 
-    const updatedList = [...shoppingList, item];
+  useEffect(() => {
+    console.log(selectedUsers);
+  }, [selectedUsers]);
 
-    setShoppingList(updatedList);
-    setItem("");
+  // const handleAddItem = () => {
+  //   if (!item) {
+  //     Alert.alert("Error", "Please enter an item");
+  //     return;
+  //   }
 
-    // Emit the updated list to the server
-    socket.emit("add_item", { item });
-  };
+  //   const updatedList = [...shoppingList, item];
 
-  const handleRemoveItem = (index) => {
-    const itemToRemove = shoppingList[index];
-    const updatedList = [...shoppingList];
-    updatedList.splice(index, 1);
+  //   setShoppingList(updatedList);
+  //   setItem("");
 
-    setShoppingList(updatedList);
+  //   // Emit the updated list to the server
+  //   socket.emit("add_item", { item });
+  // };
 
-    // Emit the updated list to the server
-    socket.emit("remove_item", { index });
-  };
+  // const handleRemoveItem = (index) => {
+  //   const itemToRemove = shoppingList[index];
+  //   const updatedList = [...shoppingList];
+  //   updatedList.splice(index, 1);
+
+  //   setShoppingList(updatedList);
+
+  //   // Emit the updated list to the server
+  //   socket.emit("remove_item_from_list", { index });
+  // };
 
   const handleGoBack = () => {
     navigation.goBack();
+  };
+
+  const handleListCreate = async () => {
+    setModalVisible(true);
+
+    try {
+      const response = await fetch("http://192.168.1.128:5000/get_user_ids", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const usersWithEnabled = data.map((user) => ({
+          ...user,
+          enabled: true,
+        }));
+
+        setSelectedUsers(usersWithEnabled);
+        // setAllUsers(data);
+      } else {
+        console.error("Error fetching user data");
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleCreateList = () => {
+    const data = {
+      name: listName,
+      items: [],
+      participants: selectedUsers.filter((user) => user.enabled),
+    };
+
+    socket.emit("create_list", { data });
+
+    setModalVisible(false);
+  };
+
+  const isSelected = (user) => {
+    return selectedUsers.some(
+      (selectedUser) => selectedUser.id === user.id && selectedUser.enabled
+    );
+  };
+
+  const handleUserSelection = (user) => {
+    setSelectedUsers((prevUsers) => {
+      const updatedUsers = prevUsers.map((prevUser) => {
+        if (prevUser.id === user.id) {
+          return { ...prevUser, enabled: !prevUser.enabled };
+        }
+        return prevUser;
+      });
+      return updatedUsers;
+    });
   };
 
   return (
@@ -67,24 +197,63 @@ const ShoppingBody = ({ socket }) => {
         </TouchableOpacity>
         <Text style={styles.headerText}>Shopping</Text>
         <View style={styles.spacer} />
+        <TouchableOpacity onPress={handleListCreate}>
+          <Text style={styles.addButton}>+</Text>
+        </TouchableOpacity>
       </View>
-      <View style={styles.content}>
-        {shoppingList.map((item, index) => (
-          <View key={index} style={styles.item}>
-            <Text style={styles.itemText}>{item}</Text>
-            <Button title="Remove" onPress={() => handleRemoveItem(index)} />
-          </View>
-        ))}
-        <View style={styles.form}>
+
+      <FlatList
+        data={shoppingLists.map((list) => ({
+          id: list[0],
+          name: list[1],
+          // Add other properties if needed
+        }))}
+        keyExtractor={(item) => item.id.toString()}
+        renderItem={({ item }) => (
+          <TouchableOpacity
+            style={styles.listItem}
+            onPress={() =>
+              navigation.navigate("ShoppingList", {
+                listId: item.id,
+                token: token,
+              })
+            }
+          >
+            <Text style={styles.listItemText}>{item.name}</Text>
+          </TouchableOpacity>
+        )}
+        contentContainerStyle={styles.listContainer}
+      />
+
+      {/* Modal */}
+      <Modal visible={modalVisible} animationType="slide" transparent={true}>
+        <View style={styles.modalContainer}>
           <TextInput
             style={styles.input}
-            value={item}
-            onChangeText={setItem}
-            placeholder="Enter an item"
+            placeholder="Enter list name"
+            value={listName}
+            onChangeText={(text) => setListName(text)}
           />
-          <Button title="Add" onPress={handleAddItem} />
+
+          <FlatList
+            data={selectedUsers
+              // .filter((user) => user.enabled)
+              .map((user, index) => ({ ...user, key: index.toString() }))}
+            renderItem={({ item }) => (
+              <View style={styles.userItem}>
+                <Switch
+                  value={isSelected(item)}
+                  onValueChange={() => handleUserSelection(item)}
+                />
+                <Text>{item.username}</Text>
+              </View>
+            )}
+          />
+
+          <Button title="Create List" onPress={handleCreateList} />
+          <Button title="Cancel" onPress={() => setModalVisible(false)} />
         </View>
-      </View>
+      </Modal>
     </View>
   );
 };
@@ -105,7 +274,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 25,
     marginTop: 50,
-    marginLeft: -15,
+    marginLeft: 30,
   },
   backButton: {
     marginLeft: 30,
@@ -122,6 +291,36 @@ const styles = StyleSheet.create({
   },
   text: {
     fontSize: 20,
+  },
+  addButton: {
+    marginRight: 30,
+    marginTop: 50,
+    fontSize: 18,
+  },
+  userItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 10,
+  },
+  modalContainer: {
+    flex: 1,
+    marginTop: 60, // Adjust this value as needed
+    padding: 20,
+    backgroundColor: "white",
+  },
+  listContainer: {
+    paddingTop: 20,
+    paddingHorizontal: 20,
+  },
+  listItem: {
+    backgroundColor: "#ffffff",
+    borderRadius: 10,
+    padding: 20,
+    marginBottom: 10,
+  },
+  listItemText: {
+    fontSize: 18,
+    fontWeight: "bold",
   },
 });
 

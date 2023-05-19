@@ -14,59 +14,16 @@ import ShoppingBody from "./ShoppingBody";
 
 const Shopping = ({ token }) => {
   const navigation = useNavigation();
-  // const [item, setItem] = useState("");
-  // const [shoppingList, setShoppingList] = useState([]);
+
   const socket = io("http://192.168.1.128:5000", {
     pingTimeout: 1000,
     pingInterval: 1000,
     extraHeaders: { Authorization: `Bearer ${token}` },
   });
 
-  // console.log("txt");
-
-  // useEffect(() => {
-  //   socket.on("updateList", (data) => {
-  //     setShoppingList(data);
-  //   });
-
-  //   return () => {
-  //     socket.disconnect();
-  //   };
-  // }, []);
-
-  // const handleAddItem = () => {
-  //   if (!item) {
-  //     Alert.alert("Error", "Please enter an item");
-  //     return;
-  //   }
-
-  //   const updatedList = [...shoppingList, item];
-
-  //   setShoppingList(updatedList);
-  //   setItem("");
-
-  //   // Emit the updated list to the server
-  //   socket.emit("add_item", { item });
-  // };
-
-  // const handleRemoveItem = (index) => {
-  //   const itemToRemove = shoppingList[index];
-  //   const updatedList = [...shoppingList];
-  //   updatedList.splice(index, 1);
-
-  //   setShoppingList(updatedList);
-
-  //   // Emit the updated list to the server
-  //   socket.emit("remove_item", { index });
-  // };
-
-  // const handleGoBack = () => {
-  //   navigation.goBack();
-  // };
-
   return (
     <View style={styles.container}>
-      <ShoppingBody socket={socket} />
+      <ShoppingBody socket={socket} token={token} />
     </View>
   );
 };
