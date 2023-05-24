@@ -1,20 +1,9 @@
 import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  TextInput,
-  Button,
-  Alert,
-} from "react-native";
-import { useNavigation, withNavigation } from "@react-navigation/native";
+import { View, StyleSheet } from "react-native";
 import { io } from "socket.io-client";
 import ShoppingBody from "./ShoppingBody";
 
 const Shopping = ({ token }) => {
-  const navigation = useNavigation();
-
   const socket = io("http://192.168.1.128:5000", {
     pingTimeout: 1000,
     pingInterval: 1000,

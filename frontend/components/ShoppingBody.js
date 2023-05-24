@@ -11,11 +11,10 @@ import {
   FlatList,
 } from "react-native";
 import { Switch } from "react-native";
-import { useNavigation, withNavigation } from "@react-navigation/native";
+import { useNavigation } from "@react-navigation/native";
 
 const ShoppingBody = ({ socket, token }) => {
   const navigation = useNavigation();
-  const [item, setItem] = useState("");
   const [shoppingLists, setShoppingLists] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [listName, setListName] = useState("");
@@ -25,11 +24,14 @@ const ShoppingBody = ({ socket, token }) => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const response = await fetch("http://192.168.1.128:5000/get_username", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const response = await fetch(
+          "http://192.168.1.128:5000/utils/get_username",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
         if (response.ok) {
           const data = await response.json();
@@ -65,7 +67,6 @@ const ShoppingBody = ({ socket, token }) => {
 
               socket.on("listByIds", (list_by_data) => {
                 if (list_by_data.currentUser == userDataRef.current) {
-                  // console.log(list_by_data.shoppingLists);
                   setShoppingLists(list_by_data.shoppingLists);
                 }
               });
@@ -94,40 +95,6 @@ const ShoppingBody = ({ socket, token }) => {
     };
   }, []);
 
-  useEffect(() => {
-    console.log(shoppingLists);
-  }, [shoppingLists]);
-
-  useEffect(() => {
-    console.log(selectedUsers);
-  }, [selectedUsers]);
-
-  // const handleAddItem = () => {
-  //   if (!item) {
-  //     Alert.alert("Error", "Please enter an item");
-  //     return;
-  //   }
-
-  //   const updatedList = [...shoppingList, item];
-
-  //   setShoppingList(updatedList);
-  //   setItem("");
-
-  //   // Emit the updated list to the server
-  //   socket.emit("add_item", { item });
-  // };
-
-  // const handleRemoveItem = (index) => {
-  //   const itemToRemove = shoppingList[index];
-  //   const updatedList = [...shoppingList];
-  //   updatedList.splice(index, 1);
-
-  //   setShoppingList(updatedList);
-
-  //   // Emit the updated list to the server
-  //   socket.emit("remove_item_from_list", { index });
-  // };
-
   const handleGoBack = () => {
     navigation.goBack();
   };
@@ -136,11 +103,14 @@ const ShoppingBody = ({ socket, token }) => {
     setModalVisible(true);
 
     try {
-      const response = await fetch("http://192.168.1.128:5000/get_user_ids", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await fetch(
+        "http://192.168.1.128:5000/shopping/get_user_ids",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       if (response.ok) {
         const data = await response.json();
@@ -150,7 +120,6 @@ const ShoppingBody = ({ socket, token }) => {
         }));
 
         setSelectedUsers(usersWithEnabled);
-        // setAllUsers(data);
       } else {
         console.error("Error fetching user data");
       }
@@ -206,7 +175,6 @@ const ShoppingBody = ({ socket, token }) => {
         data={shoppingLists.map((list) => ({
           id: list[0],
           name: list[1],
-          // Add other properties if needed
         }))}
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
@@ -225,7 +193,6 @@ const ShoppingBody = ({ socket, token }) => {
         contentContainerStyle={styles.listContainer}
       />
 
-      {/* Modal */}
       <Modal visible={modalVisible} animationType="slide" transparent={true}>
         <View style={styles.modalContainer}>
           <TextInput
@@ -236,9 +203,10 @@ const ShoppingBody = ({ socket, token }) => {
           />
 
           <FlatList
-            data={selectedUsers
-              // .filter((user) => user.enabled)
-              .map((user, index) => ({ ...user, key: index.toString() }))}
+            data={selectedUsers.map((user, index) => ({
+              ...user,
+              key: index.toString(),
+            }))}
             renderItem={({ item }) => (
               <View style={styles.userItem}>
                 <Switch
@@ -304,7 +272,7 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     flex: 1,
-    marginTop: 60, // Adjust this value as needed
+    marginTop: 60,
     padding: 20,
     backgroundColor: "white",
   },

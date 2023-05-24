@@ -20,11 +20,14 @@ const ShoppingListBody = ({ socket, token, listId }) => {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const response = await fetch("http://192.168.1.128:5000/get_username", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const response = await fetch(
+          "http://192.168.1.128:5000/utils/get_username",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
         if (response.ok) {
           const data = await response.json();
@@ -80,10 +83,6 @@ const ShoppingListBody = ({ socket, token, listId }) => {
   };
 
   const handleRemoveItem = async (index) => {
-    // const itemToRemove = itemList[0][2][index];
-    // const updatedList = [...itemList[0][2]];
-    // updatedList.splice(index, 1);
-
     const data = {
       index: index,
       list_id: listId,
@@ -116,7 +115,6 @@ const ShoppingListBody = ({ socket, token, listId }) => {
         </TouchableOpacity>
       </View>
 
-      {/* Rest of the content for the individual list screen */}
       <View>
         <Text>List ID: {listId}</Text>
         <View>
@@ -138,8 +136,6 @@ const ShoppingListBody = ({ socket, token, listId }) => {
               ))
           )}
         </View>
-        {/* Display the details of the selected list */}
-        {/* ... */}
       </View>
 
       <View style={styles.individualFooter}>
@@ -150,17 +146,13 @@ const ShoppingListBody = ({ socket, token, listId }) => {
 
       <Modal visible={modalVisible} animationType="slide" transparent={true}>
         <View style={styles.modalContainer}>
-          {/* Render the input for item name */}
           <TextInput
             value={itemName}
             placeholder="Enter item name"
             onChangeText={(text) => setItemName(text)}
           />
 
-          {/* Render the button to add the item */}
           <Button title="Add" onPress={handleAddItem} />
-
-          {/* Render the button to close the modal */}
           <Button title="Cancel" onPress={() => setModalVisible(false)} />
         </View>
       </Modal>
@@ -169,7 +161,6 @@ const ShoppingListBody = ({ socket, token, listId }) => {
 };
 
 const styles = StyleSheet.create({
-  // Styles for individual shopping lists
   individualContainer: {
     flex: 1,
     backgroundColor: "white",
@@ -214,7 +205,7 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     flex: 1,
-    marginTop: 50, // Adjust this value as needed
+    marginTop: 50,
     padding: 20,
     backgroundColor: "white",
   },

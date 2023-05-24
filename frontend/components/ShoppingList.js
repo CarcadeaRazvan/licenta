@@ -1,24 +1,10 @@
-import React, { useState, useEffect } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Modal,
-  TextInput,
-  Button,
-  Alert,
-} from "react-native";
-import { useNavigation, withNavigation } from "@react-navigation/native";
+import React, { useState } from "react";
+import { View, StyleSheet } from "react-native";
 import { io } from "socket.io-client";
 import ShoppingListBody from "./ShoppingListBody";
 
 const ShoppingList = ({ route }) => {
   const { listId, token } = route.params;
-  const navigation = useNavigation();
-  const [modalVisible, setModalVisible] = useState(false);
-  const [itemName, setItemName] = useState("");
-  const [itemList, setItemList] = useState([]);
 
   const socket = io("http://192.168.1.128:5000", {
     pingTimeout: 1000,
@@ -66,7 +52,7 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     flex: 1,
-    marginTop: 50, // Adjust this value as needed
+    marginTop: 50,
     padding: 20,
     backgroundColor: "white",
   },

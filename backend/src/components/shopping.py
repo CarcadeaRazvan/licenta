@@ -1,163 +1,13 @@
-from flask import Flask, request, jsonify
-from flask_jwt_extended import JWTManager, jwt_required, create_access_token, get_jwt_identity
-from flask_bcrypt import Bcrypt
-from flask_cors import CORS
+from flask import Blueprint, request, jsonify
 import psycopg2
+from flask_socketio import emit
 from flask_jwt_extended.exceptions import JWTExtendedException
-from flask_socketio import SocketIO, emit
-from datetime import timedelta
-import json
+from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity
+from app import socketio
 
-app = Flask(__name__)
-app.config['JWT_SECRET_KEY'] = 'super-secret'  # Replace with a secure key in production
-CORS(app)
-jwt = JWTManager(app)
-bcrypt = Bcrypt(app)
-socketio = SocketIO(app, async_mode='threading')
+shopping_bp = Blueprint('shopping', __name__)
 
-@jwt.invalid_token_loader
-def handle_invalid_token(jwt_payload):
-    response = jsonify({'error': 'Invalid token'})
-    response.status_code = 401
-    return response
-
-@app.errorhandler(JWTExtendedException)
-def handle_jwt_error(error):
-    response = jsonify({'error': error.description})
-    response.status_code = error.status_code
-    return response
-
-@app.route('/login', methods=['POST'])
-def login():
-    conn = psycopg2.connect(
-        host="localhost",
-        database="mydatabase",
-        user="postgres",
-        password="admin"
-    )
-
-    # execute a SELECT query on the "users" table
-    cur = conn.cursor()
-    cur.execute("SELECT username, password FROM users;")
-
-    # fetch the data and store it in a dictionary
-    users = {}
-    for row in cur.fetchall():
-        username, password_hash = row
-        users[username] = password_hash
-
-    # close the cursor and connection
-    cur.close()
-    conn.close()
-
-    username = request.json.get('username', None)
-    password = request.json.get('password', None)
-    print(username, password)
-    if not username or not password:
-        return jsonify({"msg": "Username and password required"}), 400
-
-    if username not in users:
-        return jsonify({"msg": "Invalid username or password"}), 401
-
-    if not bcrypt.check_password_hash(users.get(username), password):
-        return jsonify({"msg": "Invalid username or password"}), 401
-
-    access_token = create_access_token(identity=username, expires_delta=timedelta(days=1))
-    print(access_token)
-    return jsonify(access_token=access_token), 200
-
-@app.route('/register', methods=['POST'])
-def register():
-    username = request.json.get('username', None)
-    password = request.json.get('password', None)
-    print(username, password)
-    if not username or not password:
-        return jsonify({"msg": "Username and password required"}), 400
-
-    # Hash the password
-    hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
-
-    # Insert the user into the database
-    try:
-        conn = psycopg2.connect(
-            host="localhost",
-            database="mydatabase",
-            user="postgres",
-            password="admin",
-            port="5432"
-        )
-
-        cursor = conn.cursor()
-        cursor.execute("INSERT INTO users (username, password) VALUES (%s, %s)", (username, hashed_password))
-        conn.commit()
-
-        cursor.close()
-        conn.close()
-    except psycopg2.Error as e:
-        print(e)
-        return jsonify({"msg": "Failed to register user"}), 500
-
-    # Return a success message
-    return jsonify({"msg": "User registered successfully"}), 201
-
-@app.route('/profile', methods=['GET'])
-@jwt_required()
-def profile():
-    current_user = get_jwt_identity()
-    if not current_user:
-        raise JWTExtendedException(description='Invalid token', status_code=401)
-    return jsonify(logged_in_as=current_user), 200
-
-@app.route('/get_username')
-@jwt_required()
-def get_username():
-    current_user = get_jwt_identity()
-    if not current_user:
-        raise JWTExtendedException(description='Invalid token', status_code=401)
-    return jsonify(current_user), 200
-
-shopping_list = []
-
-def init():
-    try:
-        conn = psycopg2.connect(
-            host="localhost",
-            database="mydatabase",
-            user="postgres",
-            password="admin",
-            port="5432"
-        )
-
-        cursor = conn.cursor()
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS shared_lists (
-                list_id SERIAL PRIMARY KEY,
-                user_ids TEXT[]
-            )
-        """)
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS users (
-                id SERIAL PRIMARY KEY,
-                username TEXT UNIQUE NOT NULL,
-                password TEXT NOT NULL
-            )
-        """)
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS shopping_lists (
-                list_id SERIAL PRIMARY KEY,
-                list_name TEXT NOT NULL,
-                items TEXT[]
-            )
-        """)
-        conn.commit()
-
-        cursor.close()
-        conn.close()
-    except psycopg2.Error as e:
-        print(e)
-        return jsonify({"msg": "Failed to init tables"}), 500
-
-@app.route('/get_user_ids', methods=['GET'])
+@shopping_bp.route('/get_user_ids', methods=['GET'])
 @jwt_required()
 def get_user_ids():
     # Return the shopping list as a JSON array
@@ -181,7 +31,6 @@ def get_user_ids():
         print(e)
         return jsonify({"msg": "Failed to get user ids"}), 500
 
-    print(users)
     return jsonify(users)
 
 @socketio.on('get_list_ids')
@@ -203,7 +52,6 @@ def get_list_ids():
         cursor.execute("SELECT list_id FROM shared_lists WHERE %s = ANY (user_ids)", (user_id,))
         shared_list_ids = cursor.fetchall()
         list_ids = [row[0] for row in shared_list_ids]
-        print(list_ids)
 
         cursor.close()
         conn.close()
@@ -218,7 +66,6 @@ def get_list_ids():
 def get_list_from_ids(data):
     # Return the shopping list as a JSON array
     user_id = get_jwt_identity()
-    print(data)
     list_ids = data['list_data']['listIds']
 
     try:
@@ -247,7 +94,7 @@ def get_list_from_ids(data):
 @jwt_required()
 def handle_get_shared_lists():
     user_id = get_jwt_identity()
-    print(user_id)
+
     try:
         conn = psycopg2.connect(
                 host="localhost",
@@ -267,7 +114,6 @@ def handle_get_shared_lists():
         # Fetch the shopping lists based on the list IDs from the shopping_lists table
         cur.execute("SELECT * FROM shopping_lists WHERE list_id = ANY (%s)", (list_ids,))
         shopping_lists = cur.fetchall()
-        print(shopping_lists)
 
         cur.close()
         conn.close()
@@ -307,8 +153,6 @@ def handle_get_items(data):
         shared_list_ids = cur.fetchall()
         list_ids = [row[0] for row in shared_list_ids]
 
-        print(shopping_list)
-
         cur.close()
         conn.close()
     except psycopg2.Error as e:
@@ -320,14 +164,9 @@ def handle_get_items(data):
 @socketio.on('add_item_to_list')
 @jwt_required()
 def handle_add_item(data):
-    # data = request.get_json()
-    print(data)
-
     user_id = get_jwt_identity()
     list_id = data['data']['list_id']
     item = data['data']['item']
-
-    print(item)
 
     try:
         conn = psycopg2.connect(
@@ -386,8 +225,6 @@ def handle_remove_item(data):
         # Retrieve the shopping list
         cur.execute("SELECT * FROM shopping_lists WHERE list_id = %s", (list_id,))
         shopping_list = cur.fetchone()
-
-        print(shopping_list[2])
 
         if shopping_list is None:
             # Shopping list not found, handle the error
@@ -460,8 +297,6 @@ def handle_create_list(data):
     participants = data['data']['participants']
     usernames = [user['username'] for user in participants]
 
-    print(list_name, participants)
-
     try:
         conn = psycopg2.connect(
                 host="localhost",
@@ -499,10 +334,3 @@ def handle_create_list(data):
         return jsonify({"msg": "Failed to create list"}), 500
 
     emit('updateLists', {"listId": list_id, "listIds": list_ids, "shoppingLists": shopping_lists, "currentUser": user_id}, broadcast=True)
-
-    
-init()
-
-if __name__ == '__main__':
-    socketio.run(app, debug=False, host='0.0.0.0', port=5000)
-
