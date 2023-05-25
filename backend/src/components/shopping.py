@@ -7,32 +7,6 @@ from app import socketio
 
 shopping_bp = Blueprint('shopping', __name__)
 
-@shopping_bp.route('/get_user_ids', methods=['GET'])
-@jwt_required()
-def get_user_ids():
-    # Return the shopping list as a JSON array
-    try:
-        conn = psycopg2.connect(
-            host="localhost",
-            database="mydatabase",
-            user="postgres",
-            password="admin",
-            port="5432"
-        )
-
-        cursor = conn.cursor()
-        cursor.execute("SELECT id, username FROM users")
-        rows = cursor.fetchall()
-        users = [{'id': row[0], 'username': row[1]} for row in rows]
-
-        cursor.close()
-        conn.close()
-    except psycopg2.Error as e:
-        print(e)
-        return jsonify({"msg": "Failed to get user ids"}), 500
-
-    return jsonify(users)
-
 @socketio.on('get_list_ids')
 @jwt_required()
 def get_list_ids():

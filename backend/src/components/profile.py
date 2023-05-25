@@ -43,14 +43,7 @@ def get_photo():
         print(e)
         return jsonify({"msg": "Failed to set profile picture"}), 500
 
-    # print(app.config["UPLOAD_FOLDER"])
-    # filename = '{}/{}'.format(app.config["UPLOAD_FOLDER"], profile_picture[0])
-    # return send_file(filename, mimetype='image/jpeg')
-
     return jsonify({'profile_picture': profile_picture[0], 'user_id': user_id})
-    # x = send_from_directory(app.config["UPLOAD_FOLDER"], profile_picture[0])
-    # print(x)
-    # return send_from_directory(app.config["UPLOAD_FOLDER"], profile_picture[0])
 
 @profile_bp.route('/image/<name>')
 def display_files(name):

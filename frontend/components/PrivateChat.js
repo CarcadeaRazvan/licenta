@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { View, StyleSheet } from "react-native";
 import { io } from "socket.io-client";
-import ShoppingListBody from "./ShoppingListBody";
+import PrivateChatBody from "./PrivateChatBody";
 
-const ShoppingList = ({ route }) => {
-  const { listId, token } = route.params;
+const PrivateChat = ({ route }) => {
+  const { chatId, token } = route.params;
 
   const socket = io("http://192.168.1.128:5000", {
     pingTimeout: 1000,
@@ -14,7 +14,7 @@ const ShoppingList = ({ route }) => {
 
   return (
     <View style={styles.individualContainer}>
-      <ShoppingListBody socket={socket} token={token} listId={listId} />
+      <PrivateChatBody socket={socket} token={token} chatId={chatId} />
     </View>
   );
 };
@@ -27,4 +27,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ShoppingList;
+export default PrivateChat;

@@ -35,5 +35,8 @@ app.register_blueprint(auth_bp, url_prefix='/auth')
 from components.utils import utils_bp
 app.register_blueprint(utils_bp, url_prefix='/utils')
 
+from components.chat import chat_bp
+app.register_blueprint(chat_bp, url_prefix='/chat')
+
 if __name__ == '__main__':
     socketio.run(app, debug=False, host='0.0.0.0', port=5000)

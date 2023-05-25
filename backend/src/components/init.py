@@ -33,6 +33,19 @@ def init():
                 items TEXT[]
             )
         """)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS shared_chats (
+                chat_id SERIAL PRIMARY KEY,
+                user_ids TEXT[]
+            )
+        """)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS private_chats (
+                chat_id SERIAL PRIMARY KEY,
+                chat_name TEXT NOT NULL,
+                messages JSONB[]
+            )
+        """)
         conn.commit()
 
         cursor.close()

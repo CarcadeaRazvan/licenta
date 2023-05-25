@@ -5,20 +5,19 @@ import {
   StyleSheet,
   TouchableOpacity,
   TextInput,
-  Button,
-  Alert,
   Modal,
   FlatList,
+  Button,
   Switch,
 } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, withNavigation } from "@react-navigation/native";
 
-const ShoppingBody = ({ socket, token }) => {
+const ChatBody = ({ socket, token }) => {
   const navigation = useNavigation();
-  const [shoppingLists, setShoppingLists] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
-  const [listName, setListName] = useState("");
+  const [chatName, setChatName] = useState("");
   const [selectedUsers, setSelectedUsers] = useState([]);
+  const [privateChats, setPrivateChats] = useState([]);
   const [userData, setUserData] = useState("");
 
   useEffect(() => {
@@ -54,35 +53,35 @@ const ShoppingBody = ({ socket, token }) => {
   }, [userData]);
 
   useEffect(() => {
-    socket.emit("get_shared_lists");
+    socket.emit("get_shared_chats");
 
-    socket.on("updateLists", (data) => {
-      if (data.listId) {
-        socket.emit("get_list_ids");
+    socket.on("updateChats", (data) => {
+      if (data.chatId) {
+        socket.emit("get_chat_ids");
 
-        socket.on("listIds", (list_data) => {
-          if (list_data.currentUser == userDataRef.current) {
-            if (list_data.listIds.includes(data.listId)) {
-              socket.emit("get_list_from_ids", { list_data });
+        socket.on("chatIds", (chat_data) => {
+          if (chat_data.currentUser == userDataRef.current) {
+            if (chat_data.chatIds.includes(data.chatId)) {
+              socket.emit("get_chat_from_ids", { chat_data });
 
-              socket.on("listByIds", (list_by_data) => {
-                if (list_by_data.currentUser == userDataRef.current) {
-                  setShoppingLists(list_by_data.shoppingLists);
+              socket.on("chatByIds", (chat_by_data) => {
+                if (chat_by_data.currentUser == userDataRef.current) {
+                  setPrivateChats(chat_by_data.privateChats);
                 }
               });
             }
           }
         });
       } else {
-        socket.emit("get_list_ids");
+        socket.emit("get_chat_ids");
 
-        socket.on("listIds", (list_data) => {
-          if (list_data.currentUser == userDataRef.current) {
-            socket.emit("get_list_from_ids", { list_data });
+        socket.on("chatIds", (chat_data) => {
+          if (chat_data.currentUser == userDataRef.current) {
+            socket.emit("get_chat_from_ids", { chat_data });
 
-            socket.on("listByIds", (list_by_data) => {
-              if (list_by_data.currentUser == userDataRef.current) {
-                setShoppingLists(list_by_data.shoppingLists);
+            socket.on("chatByIds", (chat_by_data) => {
+              if (chat_by_data.currentUser == userDataRef.current) {
+                setPrivateChats(chat_by_data.privateChats);
               }
             });
           }
@@ -99,7 +98,7 @@ const ShoppingBody = ({ socket, token }) => {
     navigation.goBack();
   };
 
-  const handleListCreate = async () => {
+  const handleChatCreate = async () => {
     setModalVisible(true);
 
     try {
@@ -128,14 +127,14 @@ const ShoppingBody = ({ socket, token }) => {
     }
   };
 
-  const handleCreateList = () => {
+  const handleCreateChat = () => {
     const data = {
-      name: listName,
-      items: [],
+      name: chatName,
+      messages: [],
       participants: selectedUsers.filter((user) => user.enabled),
     };
 
-    socket.emit("create_list", { data });
+    socket.emit("create_chat", { data });
 
     setModalVisible(false);
   };
@@ -164,42 +163,40 @@ const ShoppingBody = ({ socket, token }) => {
         <TouchableOpacity onPress={handleGoBack}>
           <Text style={styles.backButton}>Back</Text>
         </TouchableOpacity>
-        <Text style={styles.headerText}>Shopping</Text>
+        <Text style={styles.headerText}>Chat</Text>
         <View style={styles.spacer} />
-        <TouchableOpacity onPress={handleListCreate}>
+        <TouchableOpacity onPress={handleChatCreate}>
           <Text style={styles.addButton}>+</Text>
         </TouchableOpacity>
       </View>
-
       <FlatList
-        data={shoppingLists.map((list) => ({
-          id: list[0],
-          name: list[1],
+        data={privateChats.map((chat) => ({
+          id: chat[0],
+          name: chat[1],
         }))}
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
           <TouchableOpacity
-            style={styles.listItem}
+            style={styles.chatItem}
             onPress={() =>
-              navigation.navigate("ShoppingList", {
-                listId: item.id,
+              navigation.navigate("PrivateChat", {
+                chatId: item.id,
                 token: token,
               })
             }
           >
-            <Text style={styles.listItemText}>{item.name}</Text>
+            <Text style={styles.chatItemText}>{item.name}</Text>
           </TouchableOpacity>
         )}
-        contentContainerStyle={styles.listContainer}
+        contentContainerStyle={styles.chatContainer}
       />
 
       <Modal visible={modalVisible} animationType="slide" transparent={true}>
         <View style={styles.modalContainer}>
           <TextInput
-            style={styles.input}
-            placeholder="Enter list name"
-            value={listName}
-            onChangeText={(text) => setListName(text)}
+            placeholder="Enter chat name"
+            value={chatName}
+            onChangeText={(text) => setChatName(text)}
           />
 
           <FlatList
@@ -218,7 +215,7 @@ const ShoppingBody = ({ socket, token }) => {
             )}
           />
 
-          <Button title="Create List" onPress={handleCreateList} />
+          <Button title="Create Chat" onPress={handleCreateChat} />
           <Button title="Cancel" onPress={() => setModalVisible(false)} />
         </View>
       </Modal>
@@ -242,7 +239,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 25,
     marginTop: 50,
-    marginLeft: 30,
+    marginLeft: -15,
   },
   backButton: {
     marginLeft: 30,
@@ -260,15 +257,19 @@ const styles = StyleSheet.create({
   text: {
     fontSize: 20,
   },
-  addButton: {
-    marginRight: 30,
-    marginTop: 50,
-    fontSize: 18,
+  chatContainer: {
+    paddingTop: 20,
+    paddingHorizontal: 20,
   },
-  userItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginVertical: 10,
+  chatItem: {
+    backgroundColor: "#ffffff",
+    borderRadius: 10,
+    padding: 20,
+    marginBottom: 10,
+  },
+  chatItemText: {
+    fontSize: 18,
+    fontWeight: "bold",
   },
   modalContainer: {
     flex: 1,
@@ -276,20 +277,16 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: "white",
   },
-  listContainer: {
-    paddingTop: 20,
-    paddingHorizontal: 20,
+  userItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 10,
   },
-  listItem: {
-    backgroundColor: "#ffffff",
-    borderRadius: 10,
-    padding: 20,
-    marginBottom: 10,
-  },
-  listItemText: {
+  addButton: {
+    marginRight: 30,
+    marginTop: 50,
     fontSize: 18,
-    fontWeight: "bold",
   },
 });
 
-export default ShoppingBody;
+export default ChatBody;

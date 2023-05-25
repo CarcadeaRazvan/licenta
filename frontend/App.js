@@ -11,6 +11,7 @@ import Shopping from "./components/Shopping";
 import Notifications from "./components/Notifications";
 import Login from "./components/Login";
 import ShoppingList from "./components/ShoppingList";
+import PrivateChat from "./components/PrivateChat";
 
 const App = () => {
   const [loggedIn, setIsLoggedIn] = React.useState(false);
@@ -39,9 +40,12 @@ const App = () => {
             <Stack.Screen name="Profile" options={{ headerShown: false }}>
               {(props) => <Profile {...props} token={token} />}
             </Stack.Screen>
+            <Stack.Screen name="Chat" options={{ headerShown: false }}>
+              {(props) => <Chat {...props} token={token} />}
+            </Stack.Screen>
             <Stack.Screen
-              name="Chat"
-              component={Chat}
+              name="PrivateChat"
+              component={PrivateChat}
               options={{ headerShown: false }}
             />
             <Stack.Screen
