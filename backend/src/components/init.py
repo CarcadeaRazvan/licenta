@@ -22,7 +22,8 @@ def init():
             CREATE TABLE IF NOT EXISTS users (
                 id SERIAL PRIMARY KEY,
                 username TEXT UNIQUE NOT NULL,
-                password TEXT NOT NULL
+                password TEXT NOT NULL,
+                profile_picture TEXT
             )
         """)
         cursor.execute("""

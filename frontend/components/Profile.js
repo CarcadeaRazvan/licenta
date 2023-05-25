@@ -1,21 +1,27 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import React, { useState, useEffect, useRef } from "react";
+import { View, Text, StyleSheet, TouchableOpacity, Image } from "react-native";
 import { useNavigation, withNavigation } from "@react-navigation/native";
+import * as ImagePicker from "expo-image-picker";
 import { Button } from "react-native";
 
 const Profile = ({ token }) => {
   const navigation = useNavigation();
-
-  const [userData, setUserData] = useState(null);
+  const [profilePhoto, setProfilePhoto] = useState(null);
+  const [profilePhotoHash, setProfilePhotoHash] = useState("default.jpg");
+  const [userData, setUserData] = useState("");
+  const [refreshKey, setRefreshKey] = useState(Date.now());
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const response = await fetch("http://192.168.1.128:5000/profile/", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const response = await fetch(
+          "http://192.168.1.128:5000/utils/get_username",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
         if (response.ok) {
           const data = await response.json();
@@ -29,11 +35,123 @@ const Profile = ({ token }) => {
     };
 
     fetchUserData();
-  }, [token]);
+  }, []);
+
+  const userDataRef = useRef(userData);
+
+  useEffect(() => {
+    userDataRef.current = userData;
+  }, [userData]);
+
+  // useEffect(() => {
+  //   const fetchUserData = async () => {
+  //     try {
+  //       const response = await fetch("http://192.168.1.128:5000/profile/", {
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //         },
+  //       });
+
+  //       if (response.ok) {
+  //         const data = await response.json();
+  //         setUserData(data);
+  //       } else {
+  //         console.error("Error fetching user data");
+  //       }
+  //     } catch (error) {
+  //       console.error(error);
+  //     }
+  //   };
+
+  //   fetchUserData();
+  // }, [token]);
+
+  useEffect(() => {
+    const fetchProfilePicture = async () => {
+      try {
+        const response = await fetch(
+          "http://192.168.1.128:5000/profile/get_picture",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          // console.log("data[]", data["user_id"]);
+          // console.log("userData", userDataRef.current);
+          if (data["user_id"] == userDataRef.current)
+            setProfilePhoto(data["profile_picture"]);
+        } else {
+          console.error("Error fetching profile photo");
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    fetchProfilePicture();
+  }, [refreshKey]);
+
+  const pickImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      alert("Permission to access the camera roll is required!");
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+    });
+
+    console.log("result ::", result);
+
+    if (!result.canceled) {
+      const uri = result["assets"][0]["uri"];
+      const fileName = `${userData}.jpg`;
+      setProfilePhoto(fileName);
+      uploadProfilePhoto(uri, fileName);
+    }
+  };
+
+  const uploadProfilePhoto = async (photoUri, fileName) => {
+    const formData = new FormData();
+    formData.append("file", {
+      uri: photoUri,
+      type: "image",
+      name: fileName,
+    });
+
+    try {
+      const response = await fetch("http://192.168.1.128:5000/profile/upload", {
+        method: "POST",
+        body: formData,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+
+      if (data["user_id"] == userDataRef.current) {
+        setProfilePhoto(data["profile_picture"]);
+        setRefreshKey(Date.now());
+      }
+    } catch (error) {
+      console.error("Error uploading profile photo:", error);
+    }
+  };
 
   const handleGoBack = () => {
     navigation.goBack();
   };
+
+  console.log(`http://192.168.1.128:5000/profile/image/${profilePhoto}`);
 
   return (
     <View style={styles.container}>
@@ -46,10 +164,20 @@ const Profile = ({ token }) => {
       </View>
       <View style={styles.content}>
         {userData ? (
-          <Text>{`Logged in as ${userData.logged_in_as}`}</Text>
+          <Text>{`Logged in as ${userDataRef.current}`}</Text>
         ) : (
           <Text>Loading...</Text>
         )}
+        {profilePhoto && (
+          <Image
+            source={{
+              uri: `http://192.168.1.128:5000/profile/image/${profilePhoto}?${refreshKey}`,
+            }}
+            style={{ width: 200, height: 200 }}
+            resizeMode="contain"
+          />
+        )}
+        <Button title="Select Profile Photo" onPress={pickImage} />
       </View>
     </View>
   );

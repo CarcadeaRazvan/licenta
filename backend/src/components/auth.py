@@ -65,7 +65,7 @@ def register():
         )
 
         cursor = conn.cursor()
-        cursor.execute("INSERT INTO users (username, password) VALUES (%s, %s)", (username, hashed_password))
+        cursor.execute("INSERT INTO users (username, password, profile_picture) VALUES (%s, %s, %s)", (username, hashed_password, "default.jpg"))
         conn.commit()
 
         cursor.close()
