@@ -12,6 +12,8 @@ import Notifications from "./components/Notifications";
 import Login from "./components/Login";
 import ShoppingList from "./components/ShoppingList";
 import PrivateChat from "./components/PrivateChat";
+import Chore from "./components/Chore";
+import PrivateChores from "./components/PrivateChores";
 
 const App = () => {
   const [loggedIn, setIsLoggedIn] = React.useState(false);
@@ -48,9 +50,17 @@ const App = () => {
               component={PrivateChat}
               options={{ headerShown: false }}
             />
+            <Stack.Screen name="Chores" options={{ headerShown: false }}>
+              {(props) => <Chores {...props} token={token} />}
+            </Stack.Screen>
             <Stack.Screen
-              name="Chores"
-              component={Chores}
+              name="Chore"
+              component={Chore}
+              options={{ headerShown: false }}
+            />
+            <Stack.Screen
+              name="PrivateChores"
+              component={PrivateChores}
               options={{ headerShown: false }}
             />
             <Stack.Screen name="Shopping" options={{ headerShown: false }}>

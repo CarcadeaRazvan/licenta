@@ -151,8 +151,6 @@ const Profile = ({ token }) => {
     navigation.goBack();
   };
 
-  console.log(`http://192.168.1.128:5000/profile/image/${profilePhoto}`);
-
   return (
     <View style={styles.container}>
       <View style={styles.header}>

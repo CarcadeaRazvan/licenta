@@ -46,6 +46,15 @@ def init():
                 messages JSONB[]
             )
         """)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS chores (
+                chore_id SERIAL PRIMARY KEY,
+                chore_name TEXT NOT NULL,
+                chore_description TEXT,
+                chore_reward INTEGER,
+                assigned_user TEXT
+            )
+        """)
         conn.commit()
 
         cursor.close()

@@ -106,25 +106,25 @@ const PrivateChatBody = ({ socket, token, chatId }) => {
     }
   };
 
-  const decryptMessage = async (ciphertext) => {
-    try {
-      const response = await fetch("http://192.168.1.128:5000/chat/decrypt", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          ciphertext: ciphertext,
-        }),
-      });
+  // const decryptMessage = async (ciphertext) => {
+  //   try {
+  //     const response = await fetch("http://192.168.1.128:5000/chat/decrypt", {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //         Authorization: `Bearer ${token}`,
+  //       },
+  //       body: JSON.stringify({
+  //         ciphertext: ciphertext,
+  //       }),
+  //     });
 
-      const data = await response.json();
-      return data.plaintext;
-    } catch (error) {
-      console.error("Error decrypting message:", error);
-    }
-  };
+  //     const data = await response.json();
+  //     return data.plaintext;
+  //   } catch (error) {
+  //     console.error("Error decrypting message:", error);
+  //   }
+  // };
 
   return (
     <View style={styles.individualContainer}>
