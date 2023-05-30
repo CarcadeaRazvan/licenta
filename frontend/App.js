@@ -6,7 +6,7 @@ import LandingPage from "./components/LandingPage";
 import Profile from "./components/Profile";
 import Chores from "./components/Chores";
 import Chat from "./components/Chat";
-import Friends from "./components/Friends";
+import SharedCalendar from "./components/SharedCalendar";
 import Shopping from "./components/Shopping";
 import Notifications from "./components/Notifications";
 import Login from "./components/Login";
@@ -76,11 +76,9 @@ const App = () => {
               component={Notifications}
               options={{ headerShown: false }}
             />
-            <Stack.Screen
-              name="Friends"
-              component={Friends}
-              options={{ headerShown: false }}
-            />
+            <Stack.Screen name="Calendar" options={{ headerShown: false }}>
+              {(props) => <SharedCalendar {...props} token={token} />}
+            </Stack.Screen>
           </Stack.Navigator>
         ) : (
           <Stack.Navigator>

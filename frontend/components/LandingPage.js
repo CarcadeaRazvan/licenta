@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, Text, TouchableOpacity } from 'react-native';
-import { useNavigation, withNavigation } from '@react-navigation/native';
+import React, { useState } from "react";
+import { View, StyleSheet, Text, TouchableOpacity } from "react-native";
+import { useNavigation, withNavigation } from "@react-navigation/native";
 
 const calculateAngle = (i, n) => 90 - (360 / n) * i;
 
@@ -36,20 +36,19 @@ const CircleButton = ({ index, total, label }) => {
   );
 };
 
-
 const LandingPage = ({ navigation, onLogout }) => {
   const features = [
-    { label: 'Profile' },
-    { label: 'Chat' },
-    { label: 'Chores' },
-    { label: 'Shopping' },
-    { label: 'Notifications' },
-    { label: 'Friends' },
+    { label: "Profile" },
+    { label: "Chat" },
+    { label: "Chores" },
+    { label: "Shopping" },
+    { label: "Notifications" },
+    { label: "Calendar" },
   ];
 
   const handleLogout = () => {
     onLogout();
-  }
+  };
 
   return (
     <View style={styles.container}>
@@ -72,40 +71,40 @@ const LandingPage = ({ navigation, onLogout }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#696969',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "#696969",
   },
   circleButton: {
-    position: 'absolute',
+    position: "absolute",
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: '#ba55d3',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "#ba55d3",
+    alignItems: "center",
+    justifyContent: "center",
   },
   circleButtonLabel: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 20,
   },
   logoutButton: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 30,
-    backgroundColor: 'lightblue',
+    backgroundColor: "lightblue",
     padding: 10,
     borderRadius: 10,
   },
   logoutButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
+    color: "white",
+    fontWeight: "bold",
     fontSize: 20,
   },
   greet: {
-    position: 'absolute',
+    position: "absolute",
     fontSize: 25,
-    alignSelf: 'center',
-    color: '#000000',
+    alignSelf: "center",
+    color: "#000000",
   },
 });
 

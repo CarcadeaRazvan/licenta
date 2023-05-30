@@ -55,6 +55,26 @@ def init():
                 assigned_user TEXT
             )
         """)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS availabilities (
+                availability_id SERIAL PRIMARY KEY,
+                username TEXT NOT NULL,
+                day DATE,
+                start_time TEXT,
+                end_time TEXT
+            )
+        """)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS activities (
+                activity_id SERIAL PRIMARY KEY,
+                activity_name TEXT NOT NULL,
+                activity_description TEXT,
+                day DATE,
+                start_time TEXT,
+                end_time TEXT,
+                user_ids TEXT[]
+            )
+        """)
         conn.commit()
 
         cursor.close()
