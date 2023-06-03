@@ -88,10 +88,6 @@ const ChatBody = ({ socket, token }) => {
         });
       }
     });
-
-    return () => {
-      socket.disconnect();
-    };
   }, []);
 
   const handleGoBack = () => {

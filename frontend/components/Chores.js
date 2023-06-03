@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { useNavigation, withNavigation } from "@react-navigation/native";
 import { Button } from "react-native";
@@ -11,6 +11,12 @@ const Chores = ({ token }) => {
     pingInterval: 1000,
     extraHeaders: { Authorization: `Bearer ${token}` },
   });
+
+  useEffect(() => {
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
 
   return (
     <View style={styles.container}>

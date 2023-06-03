@@ -64,10 +64,6 @@ const PrivateChatBody = ({ socket, token, chatId }) => {
         setMessages(data.privateChat[0][2]);
       }
     });
-
-    return () => {
-      socket.disconnect();
-    };
   }, []);
 
   const handleGoBack = () => {

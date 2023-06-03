@@ -61,10 +61,6 @@ const ShoppingListBody = ({ socket, token, listId }) => {
         setItemList(data.shoppingList);
       }
     });
-
-    return () => {
-      socket.disconnect();
-    };
   }, []);
 
   const handleGoBack = () => {
@@ -116,7 +112,7 @@ const ShoppingListBody = ({ socket, token, listId }) => {
       </View>
 
       <View>
-        <Text>List ID: {listId}</Text>
+        <Text> List ID: {listId}</Text>
         <View>
           {itemList.map((item) =>
             item[2]

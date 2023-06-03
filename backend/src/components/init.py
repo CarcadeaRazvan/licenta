@@ -85,6 +85,13 @@ def init():
                 user_ids TEXT[]
             )
         """)
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS notifications (
+                notification_id SERIAL PRIMARY KEY,
+                username TEXT NOT NULL,
+                notification TEXT
+            )
+        """)
         conn.commit()
 
         cursor.close()

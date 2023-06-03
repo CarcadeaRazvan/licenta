@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect } from "react";
 import { View, StyleSheet } from "react-native";
 import { io } from "socket.io-client";
 import ShoppingListBody from "./ShoppingListBody";
@@ -11,6 +11,12 @@ const ShoppingList = ({ route }) => {
     pingInterval: 1000,
     extraHeaders: { Authorization: `Bearer ${token}` },
   });
+
+  useEffect(() => {
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
 
   return (
     <View style={styles.individualContainer}>

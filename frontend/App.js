@@ -64,9 +64,11 @@ const App = () => {
               component={PrivateChores}
               options={{ headerShown: false }}
             />
-            <Stack.Screen name="Rewards" options={{ headerShown: false }}>
-              {(props) => <Rewards {...props} token={token} />}
-            </Stack.Screen>
+            <Stack.Screen
+              name="Rewards"
+              component={Rewards}
+              options={{ headerShown: false }}
+            />
             <Stack.Screen name="Shopping" options={{ headerShown: false }}>
               {(props) => <Shopping {...props} token={token} />}
             </Stack.Screen>

@@ -127,7 +127,7 @@ const ChoresBody = ({ socket, token }) => {
       <TouchableOpacity
         style={styles.rewardsButton}
         onPress={() => {
-          navigation.navigate("Rewards");
+          navigation.navigate("Rewards", { token: token });
         }}
         activeOpacity={0.8}
       >

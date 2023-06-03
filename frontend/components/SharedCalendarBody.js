@@ -146,7 +146,6 @@ const SharedCalendarBody = ({ token, socket }) => {
   }, [userData]);
 
   const handleUserSelection = (user) => {
-    console.log(user);
     setAvailableUsers((prevUsers) => {
       const updatedUsers = prevUsers.map((prevUser) => {
         if (prevUser.id === user.id) {
@@ -257,8 +256,6 @@ const SharedCalendarBody = ({ token, socket }) => {
       .catch((error) => {
         console.error("Error retrieving availabilities:", error);
       });
-
-      
 
     setUserAvailabilities(true);
 

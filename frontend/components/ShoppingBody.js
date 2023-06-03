@@ -89,10 +89,6 @@ const ShoppingBody = ({ socket, token }) => {
         });
       }
     });
-
-    return () => {
-      socket.disconnect();
-    };
   }, []);
 
   const handleGoBack = () => {
