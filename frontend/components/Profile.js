@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Image } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Image, FlatList } from "react-native";
 import { useNavigation, withNavigation } from "@react-navigation/native";
 import * as ImagePicker from "expo-image-picker";
 import { Button } from "react-native";
@@ -10,12 +10,13 @@ const Profile = ({ token }) => {
   const [profilePhotoHash, setProfilePhotoHash] = useState("default.jpg");
   const [userData, setUserData] = useState("");
   const [refreshKey, setRefreshKey] = useState(Date.now());
+  const [rewards, setRewards] = useState([]);
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
         const response = await fetch(
-          "http://192.168.1.128:5000/utils/get_username",
+          "http://192.168.1.137:5000/utils/get_username",
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -43,34 +44,38 @@ const Profile = ({ token }) => {
     userDataRef.current = userData;
   }, [userData]);
 
-  // useEffect(() => {
-  //   const fetchUserData = async () => {
-  //     try {
-  //       const response = await fetch("http://192.168.1.128:5000/profile/", {
-  //         headers: {
-  //           Authorization: `Bearer ${token}`,
-  //         },
-  //       });
+  useEffect(() => {
+    const fetchUserRewards = async () => {
+      try {
+        const response = await fetch(
+          "http://192.168.1.137:5000/rewards/get_user_rewards",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
 
-  //       if (response.ok) {
-  //         const data = await response.json();
-  //         setUserData(data);
-  //       } else {
-  //         console.error("Error fetching user data");
-  //       }
-  //     } catch (error) {
-  //       console.error(error);
-  //     }
-  //   };
+        if (response.ok) {
+          const data = await response.json();
+          console.log(data);
+          setRewards(data["rewards"]);
+        } else {
+          console.error("Error fetching user rewards");
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
 
-  //   fetchUserData();
-  // }, [token]);
+    fetchUserRewards();
+  }, []);
 
   useEffect(() => {
     const fetchProfilePicture = async () => {
       try {
         const response = await fetch(
-          "http://192.168.1.128:5000/profile/get_picture",
+          "http://192.168.1.137:5000/profile/get_picture",
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -128,7 +133,7 @@ const Profile = ({ token }) => {
     });
 
     try {
-      const response = await fetch("http://192.168.1.128:5000/profile/upload", {
+      const response = await fetch("http://192.168.1.137:5000/profile/upload", {
         method: "POST",
         body: formData,
         headers: {
@@ -169,13 +174,25 @@ const Profile = ({ token }) => {
         {profilePhoto && (
           <Image
             source={{
-              uri: `http://192.168.1.128:5000/profile/image/${profilePhoto}?${refreshKey}`,
+              uri: `http://192.168.1.137:5000/profile/image/${profilePhoto}?${refreshKey}`,
             }}
             style={{ width: 200, height: 200 }}
             resizeMode="contain"
           />
         )}
         <Button title="Select Profile Photo" onPress={pickImage} />
+        <Text style={styles.rewardsHeaderText}>My rewards</Text>
+        <FlatList
+          data={rewards}
+          keyExtractor={(item) => item[0].toString()}
+          contentContainerStyle={styles.rewardListContainer}
+          renderItem={({ item }) => (
+            <View style={styles.rewardItem}>
+              <Text style={styles.rewardName}>{item[1]}</Text>
+              <Text style={styles.rewardDescription}>{item[2]}</Text>
+            </View>
+          )}
+        />
       </View>
     </View>
   );
@@ -214,6 +231,27 @@ const styles = StyleSheet.create({
   },
   text: {
     fontSize: 20,
+  },
+  rewardsHeaderText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  rewardListContainer: {
+    paddingHorizontal: 10,
+  },
+  rewardItem: {
+    backgroundColor: 'lightgray',
+    padding: 10,
+    marginBottom: 10,
+    borderRadius: 5,
+  },
+  rewardName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  rewardDescription: {
+    fontSize: 16,
   },
 });
 

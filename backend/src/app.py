@@ -15,11 +15,7 @@ CORS(app)
 jwt = JWTManager(app)
 bcrypt = Bcrypt(app)
 socketio = SocketIO(app, async_mode='threading')
-# app.config['UPLOAD_FOLDER'] = os.path.join(app.static_folder, 'profiles')
-app.config['UPLOAD_FOLDER'] = 'E:/licenta/licenta/backend/profiles'
-
-# photos = UploadSet('photos', IMAGES)
-# configure_uploads(app, photos)
+app.config['UPLOAD_FOLDER'] = 'E:/licenta/backend/profiles'
 
 init()
 
@@ -43,6 +39,9 @@ app.register_blueprint(chores_bp, url_prefix='/chores')
 
 from components.calendar import calendar_bp
 app.register_blueprint(calendar_bp, url_prefix='/calendar')
+
+from components.rewards import rewards_bp
+app.register_blueprint(rewards_bp, url_prefix='/rewards')
 
 if __name__ == '__main__':
     socketio.run(app, debug=False, host='0.0.0.0', port=5000)

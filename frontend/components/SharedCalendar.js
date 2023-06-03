@@ -2,17 +2,19 @@ import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { useNavigation, withNavigation } from "@react-navigation/native";
 import { Button } from "react-native";
+import { io } from "socket.io-client";
 import SharedCalendarBody from "./SharedCalendarBody";
 
 const SharedCalendar = ({ token }) => {
-  const handleDateSelect = (selectedDate) => {
-    // Handle the selected date
-    console.log("Selected date:", selectedDate);
-  };
+  const socket = io("http://192.168.1.137:5000", {
+    pingTimeout: 1000,
+    pingInterval: 1000,
+    extraHeaders: { Authorization: `Bearer ${token}` },
+  });
 
   return (
     <View>
-      <SharedCalendarBody token={token} />
+      <SharedCalendarBody token={token} socket={socket} />
     </View>
   );
 };

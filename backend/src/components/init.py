@@ -23,7 +23,9 @@ def init():
                 id SERIAL PRIMARY KEY,
                 username TEXT UNIQUE NOT NULL,
                 password TEXT NOT NULL,
-                profile_picture TEXT
+                profile_picture TEXT,
+                points INTEGER DEFAULT 0,
+                rewards INTEGER[]
             )
         """)
         cursor.execute("""
@@ -56,10 +58,18 @@ def init():
             )
         """)
         cursor.execute("""
+            CREATE TABLE IF NOT EXISTS rewards (
+                reward_id SERIAL PRIMARY KEY,
+                reward_name TEXT NOT NULL,
+                reward_description TEXT,
+                reward_price INTEGER
+            )
+        """)
+        cursor.execute("""
             CREATE TABLE IF NOT EXISTS availabilities (
                 availability_id SERIAL PRIMARY KEY,
                 username TEXT NOT NULL,
-                day DATE,
+                day TEXT,
                 start_time TEXT,
                 end_time TEXT
             )
@@ -69,7 +79,7 @@ def init():
                 activity_id SERIAL PRIMARY KEY,
                 activity_name TEXT NOT NULL,
                 activity_description TEXT,
-                day DATE,
+                day TEXT,
                 start_time TEXT,
                 end_time TEXT,
                 user_ids TEXT[]

@@ -24,7 +24,7 @@ const ChatBody = ({ socket, token }) => {
     const fetchUserData = async () => {
       try {
         const response = await fetch(
-          "http://192.168.1.128:5000/utils/get_username",
+          "http://192.168.1.137:5000/utils/get_username",
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -103,7 +103,7 @@ const ChatBody = ({ socket, token }) => {
 
     try {
       const response = await fetch(
-        "http://192.168.1.128:5000/utils/get_user_ids",
+        "http://192.168.1.137:5000/utils/get_user_ids",
         {
           headers: {
             Authorization: `Bearer ${token}`,

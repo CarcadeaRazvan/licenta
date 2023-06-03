@@ -123,6 +123,16 @@ const ChoresBody = ({ socket, token }) => {
       >
         <Text style={styles.privateChoresButtonText}>My Chores</Text>
       </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.rewardsButton}
+        onPress={() => {
+          navigation.navigate("Rewards");
+        }}
+        activeOpacity={0.8}
+      >
+        <Text style={styles.privateChoresButtonText}>Rewards</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -182,6 +192,15 @@ const styles = StyleSheet.create({
     position: "absolute",
     bottom: 16,
     right: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: "blue",
+  },
+  rewardsButton: {
+    position: "absolute",
+    bottom: 16,
+    left: 16,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,

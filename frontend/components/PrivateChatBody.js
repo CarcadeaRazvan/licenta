@@ -24,7 +24,7 @@ const PrivateChatBody = ({ socket, token, chatId }) => {
     const fetchUserData = async () => {
       try {
         const response = await fetch(
-          "http://192.168.1.128:5000/utils/get_username",
+          "http://192.168.1.137:5000/utils/get_username",
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -88,7 +88,7 @@ const PrivateChatBody = ({ socket, token, chatId }) => {
 
   const encryptMessage = async (message) => {
     try {
-      const response = await fetch("http://192.168.1.128:5000/chat/encrypt", {
+      const response = await fetch("http://192.168.1.137:5000/chat/encrypt", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -10,21 +10,9 @@ import {
   TextInput,
 } from "react-native";
 import { useNavigation, withNavigation } from "@react-navigation/native";
-import { Button } from "react-native";
 import { Calendar } from "react-native-calendars";
-import { Agenda } from "react-native-big-calendar";
 
-// tabela cu disponibilitatea userilor
-// la add event selectare ora de inceput si de final eveniment
-// dupa selectarea orei sa scot toti userii disponibili in intervalul orar
-// selectare din lista useri -> crearea evenimentului + stocare
-// la apasarea pe data din calendar sa afisez toate evenimentele userului din
-// ziua respectiva
-// interfata: lista evenimente, adaugare disponibilitate, buton add event
-// -> deschidere modal in care introduc ora de inceput si de final ->
-// buton check availabilities -> flat list cu toti userii disponibili
-
-const SharedCalendarBody = ({ token }) => {
+const SharedCalendarBody = ({ token, socket }) => {
   const navigation = useNavigation();
   const [selectedDate, setSelectedDate] = useState(null);
   const [events, setEvents] = useState([]);
@@ -36,13 +24,14 @@ const SharedCalendarBody = ({ token }) => {
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [availableUsers, setAvailableUsers] = useState([]);
+  const [usersModal, setUsersModal] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [userData, setUserData] = useState("");
 
   const handleDateSelect = (date) => {
-    // Handle the selected date
     console.log("Selected date:", date);
     setEvents([]);
     setSelectedDate(date.dateString);
-    // setModalVisible(true);
   };
 
   const handleGoBack = () => {
@@ -50,12 +39,13 @@ const SharedCalendarBody = ({ token }) => {
   };
 
   const handleActivityCreate = async () => {
+    setAvailableUsers([]);
     setUserAvailabilities(false);
     setModalVisible(true);
 
     try {
       const response = await fetch(
-        "http://192.168.1.128:5000/utils/get_user_ids",
+        "http://192.168.1.137:5000/utils/get_user_ids",
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -80,8 +70,6 @@ const SharedCalendarBody = ({ token }) => {
   };
 
   const handleAddEvent = async () => {
-    // Handle adding event to the desired hour
-    // You can implement your logic here
     const data = {
       activityName: activityName,
       activityDescription: activityDescription,
@@ -93,7 +81,7 @@ const SharedCalendarBody = ({ token }) => {
 
     try {
       const response = await fetch(
-        "http://192.168.1.128:5000/calendar/add_activity",
+        "http://192.168.1.137:5000/calendar/add_activity",
         {
           method: "POST",
           body: JSON.stringify(data),
@@ -125,7 +113,40 @@ const SharedCalendarBody = ({ token }) => {
     );
   };
 
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await fetch(
+          "http://192.168.1.137:5000/utils/get_username",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          setUserData(data);
+        } else {
+          console.error("Error fetching user data");
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    fetchUserData();
+  }, []);
+
+  const userDataRef = useRef(userData);
+
+  useEffect(() => {
+    userDataRef.current = userData;
+  }, [userData]);
+
   const handleUserSelection = (user) => {
+    console.log(user);
     setAvailableUsers((prevUsers) => {
       const updatedUsers = prevUsers.map((prevUser) => {
         if (prevUser.id === user.id) {
@@ -137,48 +158,31 @@ const SharedCalendarBody = ({ token }) => {
     });
   };
 
-  // useEffect(() => {
-  //   console.log(events);
-  // }, [selectedDate]);
-
   useEffect(() => {
-    // Fetch events for the current user from the backend
-    if (selectedDate) {
-      fetch("http://192.168.1.128:5000/calendar/get_user_events", {
-        method: "POST",
-        body: JSON.stringify({ selectedDate: selectedDate }),
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      })
-        .then((response) => response.json())
-        .then((data) => {
-          console.log(data["events"].length);
+    const data = {
+      selectedDate: selectedDate,
+    };
 
-          if (data["events"].length == 0) setEvents([]);
-          else {
-            const date = new Date(data["events"][0][3]);
-            const formattedDate = date.toISOString().slice(0, 10);
-            if (selectedDate == formattedDate) {
-              setEvents(data["events"]);
-            }
-          }
-        })
-        .catch((error) => {
-          console.error("Error retrieving events:", error);
-        });
+    if (selectedDate) {
+      socket.emit("get_user_events", { data });
+
+      socket.on("getEvents", (data) => {
+        console.log(data);
+        if (userDataRef.current == data["currentUser"])
+          setEvents(data["activities"]);
+      });
     }
   }, [selectedDate]);
 
   const handleCheckAvailabilities = () => {
-    fetch("http://192.168.1.128:5000/calendar/get_user_availabilities", {
+    fetch("http://192.168.1.137:5000/calendar/get_user_availabilities", {
       method: "POST",
       body: JSON.stringify({
         selectedDate: selectedDate,
         startTime: startTime,
         endTime: endTime,
       }),
+      
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
@@ -197,6 +201,88 @@ const SharedCalendarBody = ({ token }) => {
         console.error("Error retrieving availabilities:", error);
       });
     setUserAvailabilities(true);
+  };
+
+  const handleEventPress = async (event) => {
+    setSelectedEvent(event);
+    setUserAvailabilities(false);
+    setAvailableUsers([]);
+    
+    try {
+      const response = await fetch(
+        "http://192.168.1.137:5000/utils/get_user_ids",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        const usersWithEnabled = data.map((user) => ({
+          ...user,
+          enabled: true,
+        }));
+
+        setSelectedUsers(usersWithEnabled);
+      } else {
+        console.error("Error fetching user data");
+      }
+    } catch (error) {
+      console.error(error);
+    }
+
+    fetch("http://192.168.1.137:5000/calendar/get_user_availabilities", {
+      method: "POST",
+      body: JSON.stringify({
+        selectedDate: event[3],
+        startTime: event[4],
+        endTime: event[5],
+      }),
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        const { availabilities, currentUser } = data;
+        const usernames = availabilities.map((item) => item[0]);
+        const filteredUsers = selectedUsers.filter((user) =>
+          usernames.includes(user.username)
+        );
+        setAvailableUsers(filteredUsers);
+      })
+      .catch((error) => {
+        console.error("Error retrieving availabilities:", error);
+      });
+
+      
+
+    setUserAvailabilities(true);
+
+    setUsersModal(true);
+  };
+
+  const handleShareEvent = () => {
+    console.log(availableUsers.filter((user) => user.enabled));
+    console.log('Sharing event:', selectedEvent);
+    console.log(selectedDate);
+
+    const data = {
+      event_id: selectedEvent[0],
+      selectedDate: selectedEvent[3],
+      startTime: selectedEvent[4],
+      endTime: selectedEvent[5],
+      participants: availableUsers.filter((user) => user.enabled),
+    };
+
+    socket.emit("share_event", { data });
+
+    setAvailableUsers([]);
+    setUserAvailabilities(false);
+    setUsersModal(false);
   };
 
   return (
@@ -220,6 +306,7 @@ const SharedCalendarBody = ({ token }) => {
             <FlatList
               data={events}
               renderItem={({ item }) => (
+              <TouchableOpacity onPress={() => handleEventPress(item)}>
                 <View style={styles.eventItemContainer}>
                   <View style={styles.eventItem}>
                     <Text style={styles.eventName}>{item[1]}</Text>
@@ -229,17 +316,53 @@ const SharedCalendarBody = ({ token }) => {
                     </Text>
                   </View>
                 </View>
+              </TouchableOpacity>
               )}
             />
           ) : (
             <Text>No events found</Text>
           )}
 
+            <Modal visible={usersModal} animationType="slide">
+              <View style={styles.modalContainer}>
+                <Text style={styles.modalTitle}>Share Event</Text>
+                <Text style={styles.modalEventName}>{selectedEvent && selectedEvent[1]}</Text>
+      
+                {/* Display users not part of the event */}
+                <Text style={styles.modalSubtitle}>Users not part of the event:</Text>
+                  {userAvailabilities && (
+                    <FlatList
+                      data={availableUsers.map((user, index) => ({
+                        ...user,
+                        key: index.toString(),
+                      }))}
+                      renderItem={({ item }) => (
+                        <View style={styles.userItem}>
+                          <Switch
+                            value={isSelected(item)}
+                            onValueChange={() => handleUserSelection(item)}
+                          />
+                          <Text>{item.username}</Text>
+                        </View>
+                      )}
+                    />
+                  )}
+      
+                <TouchableOpacity style={styles.modalButton} onPress={handleShareEvent}>
+                  <Text style={styles.modalButtonText}>Share</Text>
+                </TouchableOpacity>
+      
+                <TouchableOpacity style={styles.modalButton} onPress={() => setUsersModal(false)}>
+                  <Text style={styles.modalButtonText}>Close</Text>
+                </TouchableOpacity>
+              </View>
+            </Modal>
+
           <TouchableOpacity
             style={styles.addButton}
             onPress={handleActivityCreate}
           >
-            <Text style={styles.addButtonText}>Schedule activity</Text>
+            <Text style={styles.addButtonText}>Schedule an activity</Text>
           </TouchableOpacity>
         </View>
         <Modal
@@ -418,6 +541,36 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 10,
     // marginBottom: 10,
+  },
+  modalTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 20,
+  },
+  modalEventName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  modalSubtitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  modalUser: {
+    fontSize: 16,
+    marginBottom: 5,
+  },
+  modalButton: {
+    backgroundColor: 'lightgray',
+    padding: 10,
+    borderRadius: 5,
+    marginTop: 10,
+  },
+  modalButtonText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
 });
 

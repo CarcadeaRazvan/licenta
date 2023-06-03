@@ -6,11 +6,12 @@ from app import socketio
 
 calendar_bp = Blueprint('calendar', __name__)
 
-@calendar_bp.route('/get_user_events', methods=['POST'])
+@socketio.on('get_user_events')
 @jwt_required()
-def get_user_events():
+def handle_get_user_events(data):
     user_id = get_jwt_identity()
-    selected_date = request.json.get('selectedDate')
+    # selected_date = request.json.get('selectedDate')
+    selected_date = data['data']['selectedDate']
 
     try:
         conn = psycopg2.connect(
@@ -23,8 +24,8 @@ def get_user_events():
 
         cur = conn.cursor()
 
-        cur.execute("SELECT * FROM activities WHERE %s = ANY (user_ids) AND day = %s", (user_id,selected_date,))
-        events = cur.fetchall()
+        cur.execute("SELECT * FROM activities WHERE %s = ANY (user_ids) AND day = %s", (user_id,selected_date))
+        activities = cur.fetchall()
 
         cur.close()
         conn.close()
@@ -32,7 +33,8 @@ def get_user_events():
         print(e)
         return jsonify({"msg": "Failed to get user ids"}), 500
     
-    return jsonify(events=events, currentUser=user_id)
+    # return jsonify(events=events, currentUser=user_id)
+    emit('getEvents', {"activities": activities, "currentUser": user_id}, broadcast=True)
 
 @calendar_bp.route('/get_user_availabilities', methods=['POST'])
 @jwt_required()
@@ -72,7 +74,6 @@ def get_user_availabilities():
             "end_time": end_time
         })
         availabilities = [item for item in cur.fetchall()]
-        print(availabilities)
 
         cur.close()
         conn.close()
@@ -92,12 +93,7 @@ def add_activity():
     activity_name = request.json.get('activityName')
     activity_description = request.json.get('activityDescription')
     participants = request.json.get('participants')
-    print(participants)
     usernames = [user['username'] for user in participants]
-    # activity_name = data['data']['name']
-    # activity_description = data['data']['items']
-    # participants = data['data']['participants']
-    # usernames = [user['username'] for user in participants]
 
     try:
         conn = psycopg2.connect(
@@ -132,3 +128,60 @@ def add_activity():
         return jsonify({"msg": "Failed to create activity"}), 500
     
     return jsonify(activities=activities, currentUser=user_id)
+
+@socketio.on('share_event')
+@jwt_required()
+def handle_share_event(data):
+    user_id = get_jwt_identity()
+    event_id = data['data']['event_id']
+    participants = data['data']['participants']
+    selected_date = data['data']['selectedDate']
+    start_time = data['data']['startTime']
+    end_time = data['data']['endTime']
+    usernames = [user['username'] for user in participants]
+
+    print(selected_date)
+
+    try:
+        conn = psycopg2.connect(
+                host="localhost",
+                database="mydatabase",
+                user="postgres",
+                password="admin",
+                port="5432"
+            )
+
+        cur = conn.cursor()
+
+        cur.execute("""
+            SELECT user_ids
+            FROM activities
+            WHERE activity_id = %(activity_id)s
+        """, {"activity_id": event_id})
+        existing_usernames = cur.fetchone()[0]
+
+        updated_usernames = list(set(existing_usernames + usernames))
+
+        for username in usernames:
+            cur.execute("""
+                INSERT INTO availabilities (username, day, start_time, end_time)
+                VALUES (%s, %s, %s, %s) RETURNING *
+            """, (username, selected_date, start_time, end_time))
+
+        cur.execute("""
+            UPDATE activities
+            SET user_ids = %(updated_usernames)s
+            WHERE activity_id = %(activity_id)s
+        """, {"updated_usernames": updated_usernames, "activity_id": event_id})
+        conn.commit()
+
+        cur.execute("SELECT * FROM activities WHERE %s = ANY (user_ids) AND day = %s", (user_id,selected_date))
+        activities = cur.fetchall()
+
+        cur.close()
+        conn.close()
+    except psycopg2.Error as e:
+        print(e)
+        return jsonify({"msg": "Failed to create list"}), 500
+
+    emit('getUserEvents', {"activities": activities, "currentUser": user_id}, broadcast=True)

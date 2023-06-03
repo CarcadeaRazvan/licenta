@@ -6,7 +6,7 @@ import PrivateChatBody from "./PrivateChatBody";
 const PrivateChat = ({ route }) => {
   const { chatId, token } = route.params;
 
-  const socket = io("http://192.168.1.128:5000", {
+  const socket = io("http://192.168.1.137:5000", {
     pingTimeout: 1000,
     pingInterval: 1000,
     extraHeaders: { Authorization: `Bearer ${token}` },

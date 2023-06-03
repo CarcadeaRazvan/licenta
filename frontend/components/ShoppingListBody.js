@@ -21,7 +21,7 @@ const ShoppingListBody = ({ socket, token, listId }) => {
     const fetchUserData = async () => {
       try {
         const response = await fetch(
-          "http://192.168.1.128:5000/utils/get_username",
+          "http://192.168.1.137:5000/utils/get_username",
           {
             headers: {
               Authorization: `Bearer ${token}`,

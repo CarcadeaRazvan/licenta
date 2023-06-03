@@ -23,7 +23,7 @@ const PrivateChores = ({ route }) => {
     const fetchUserData = async () => {
       try {
         const response = await fetch(
-          "http://192.168.1.128:5000/utils/get_username",
+          "http://192.168.1.137:5000/utils/get_username",
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -55,7 +55,7 @@ const PrivateChores = ({ route }) => {
     const fetchUserChores = async () => {
       try {
         const response = await fetch(
-          "http://192.168.1.128:5000/chores/get_user_chores",
+          "http://192.168.1.137:5000/chores/get_user_chores",
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -85,7 +85,7 @@ const PrivateChores = ({ route }) => {
 
     try {
       const response = await fetch(
-        "http://192.168.1.128:5000/chores/complete_chore",
+        "http://192.168.1.137:5000/chores/complete_chore",
         {
           method: "POST",
           headers: {

@@ -1,9 +1,11 @@
 import React from "react";
-import { View, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { useNavigation, withNavigation } from "@react-navigation/native";
+import { Button } from "react-native";
 import { io } from "socket.io-client";
-import ChatBody from "./ChatBody";
+import RewardsBody from "./RewardsBody";
 
-const Chat = ({ token }) => {
+const Rewards = ({ token }) => {
   const socket = io("http://192.168.1.137:5000", {
     pingTimeout: 1000,
     pingInterval: 1000,
@@ -12,7 +14,7 @@ const Chat = ({ token }) => {
 
   return (
     <View style={styles.container}>
-      <ChatBody socket={socket} token={token} />
+      <RewardsBody socket={socket} token={token} />
     </View>
   );
 };
@@ -23,4 +25,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Chat;
+export default Rewards;

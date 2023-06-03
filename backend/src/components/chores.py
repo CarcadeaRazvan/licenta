@@ -39,8 +39,6 @@ def complete_chore():
     user_id = get_jwt_identity()
     chore_id = request.json.get('chore_id')
 
-    print(chore_id)
-
     try:
         conn = psycopg2.connect(
                 host="localhost",
@@ -51,6 +49,23 @@ def complete_chore():
             )
 
         cur = conn.cursor()
+
+        cur.execute("""
+            SELECT chore_reward
+            FROM chores
+            WHERE chore_id = %(chore_id)s
+        """, {'chore_id': chore_id})
+
+        chore_reward = cur.fetchone()[0]
+        print(chore_reward)
+        print(user_id)
+
+        cur.execute("""
+            UPDATE users
+            SET points = points + %(chore_reward)s
+            WHERE username = %(assigned_user)s
+        """, {'chore_reward': chore_reward, 'assigned_user': user_id})
+        conn.commit()
 
         cur.execute("DELETE FROM chores WHERE chore_id = %s", (chore_id,))
         conn.commit()
