@@ -263,12 +263,9 @@ const SharedCalendarBody = ({ token, socket }) => {
   };
 
   const handleShareEvent = () => {
-    console.log(availableUsers.filter((user) => user.enabled));
-    console.log('Sharing event:', selectedEvent);
-    console.log(selectedDate);
-
     const data = {
-      event_id: selectedEvent[0],
+      eventId: selectedEvent[0],
+      activityName: selectedEvent[1],
       selectedDate: selectedEvent[3],
       startTime: selectedEvent[4],
       endTime: selectedEvent[5],

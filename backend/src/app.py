@@ -43,5 +43,8 @@ app.register_blueprint(calendar_bp, url_prefix='/calendar')
 from components.rewards import rewards_bp
 app.register_blueprint(rewards_bp, url_prefix='/rewards')
 
+from components.notifications import notifications_bp
+app.register_blueprint(notifications_bp, url_prefix='/notifications')
+
 if __name__ == '__main__':
     socketio.run(app, debug=False, host='0.0.0.0', port=5000)

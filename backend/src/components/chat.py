@@ -155,6 +155,15 @@ def handle_create_chat(data):
                     (chat_name, messages))
         chat_id = cur.fetchone()[0]
 
+        for username in usernames:
+            if user_id != username:
+                notification = 'You have been added to the chat {}'.format(chat_name)
+
+                cur.execute("""
+                        INSERT INTO notifications (username, notification)
+                        VALUES (%s, %s) RETURNING *
+                    """, (username, notification))
+
         cur.execute("INSERT INTO shared_chats (chat_id, user_ids) VALUES (%s, %s)", (chat_id, usernames))
         conn.commit()
 

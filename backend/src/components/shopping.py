@@ -159,7 +159,6 @@ def handle_add_item(data):
         if not result:
             return
 
-        # Add the new item to the list in the shopping_lists table
         cur.execute("UPDATE shopping_lists SET items = items || %s WHERE list_id = %s", ([item], list_id))
         conn.commit()
 
@@ -196,18 +195,14 @@ def handle_remove_item(data):
             )
 
         cur = conn.cursor()
-        # Retrieve the shopping list
         cur.execute("SELECT * FROM shopping_lists WHERE list_id = %s", (list_id,))
         shopping_list = cur.fetchone()
 
         if shopping_list is None:
-            # Shopping list not found, handle the error
             return
 
-        # Remove the item from the shopping list
         del shopping_list[2][index]
 
-        # Update the shopping list in the database
         cur.execute("UPDATE shopping_lists SET items = %s WHERE list_id = %s", (shopping_list[2], list_id))
         conn.commit()
 
@@ -243,8 +238,22 @@ def handle_remove_list(data):
             )
 
         cur = conn.cursor()
+        cur.execute("SELECT user_ids FROM shared_lists WHERE list_id = %s", (list_id,))
+        usernames = cur.fetchall()
+
+        cur.execute("SELECT list_name FROM shopping_lists WHERE list_id = %s", (list_id,))
+        list_name = cur.fetchone()
+
+        for username in usernames[0][0]:
+            if username != user_id:
+                notification = 'Shopping list {} has been deleted'.format(list_name[0])
+
+                cur.execute("""
+                    INSERT INTO notifications (username, notification)
+                    VALUES (%s, %s) RETURNING *
+                """, (username, notification))
+
         cur.execute("DELETE FROM shared_lists WHERE list_id = %s", (list_id,))
-        conn.commit()
 
         cur.execute("DELETE FROM shopping_lists WHERE list_id = %s", (list_id,))
         conn.commit()
@@ -282,6 +291,15 @@ def handle_create_list(data):
 
         cur = conn.cursor()
 
+        for username in usernames:
+            if username != user_id:
+                notification = 'You have been added to the shopping list {}'.format(list_name)
+
+                cur.execute("""
+                    INSERT INTO notifications (username, notification)
+                    VALUES (%s, %s) RETURNING *
+                """, (username, notification))
+
         # Insert the list into the shopping_lists table
         cur.execute("INSERT INTO shopping_lists (list_name, items) VALUES (%s, %s) RETURNING list_id",
                     (list_name, items))
@@ -294,8 +312,6 @@ def handle_create_list(data):
         cur.execute("SELECT list_id FROM shared_lists WHERE %s = ANY (user_ids)", (user_id,))
         shared_list_ids = cur.fetchall()
         list_ids = [row[0] for row in shared_list_ids]
-
-        print(list_ids)
 
         # Fetch the shopping lists based on the list IDs from the shopping_lists table
         cur.execute("SELECT * FROM shopping_lists WHERE list_id = ANY (%s)", (list_ids,))

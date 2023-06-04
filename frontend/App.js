@@ -77,11 +77,9 @@ const App = () => {
               component={ShoppingList}
               options={{ headerShown: false }}
             />
-            <Stack.Screen
-              name="Notifications"
-              component={Notifications}
-              options={{ headerShown: false }}
-            />
+            <Stack.Screen name="Notifications" options={{ headerShown: false }}>
+              {(props) => <Notifications {...props} token={token} />}
+            </Stack.Screen>
             <Stack.Screen name="Calendar" options={{ headerShown: false }}>
               {(props) => <SharedCalendar {...props} token={token} />}
             </Stack.Screen>

@@ -1,27 +1,26 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useNavigation, withNavigation } from '@react-navigation/native';
 import { Button } from 'react-native';
+import { io } from "socket.io-client";
+import NotificationsBody from './NotificationsBody';
 
-const Notifications = () => {
-  const navigation = useNavigation();
+const Notifications = ({ token }) => {
+  const socket = io("http://192.168.1.137:5000", {
+    pingTimeout: 1000,
+    pingInterval: 1000,
+    extraHeaders: { Authorization: `Bearer ${token}` },
+  });
 
-  const handleGoBack = () => {
-    navigation.goBack();
-  };
+  useEffect(() => {
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={handleGoBack}>
-          <Text style={styles.backButton}>Back</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerText}>Notifications</Text>
-        <View style={styles.spacer} />
-      </View>
-      <View style={styles.content}>
-        <Text style={styles.text}>You have no Notifications yet.</Text>
-      </View>
+      <NotificationsBody socket={socket} token={token} />
     </View>
   );
 };
@@ -29,36 +28,6 @@ const Notifications = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  header: {
-    backgroundColor: '#FFFFFF',
-    flexDirection: 'row',
-    alignItems: 'center',
-    height: 80,
-  },
-  headerText: {
-    flex: 1,
-    textAlign: 'center',
-    fontWeight: 'bold',
-    fontSize: 25,
-    marginTop: 50,
-    marginLeft: -15
-  },
-  backButton: {
-    marginLeft: 30,
-    marginTop: 50,
-    fontSize: 18,
-  },
-  spacer: {
-    width: 60,
-  },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  text: {
-    fontSize: 20,
   },
 });
 

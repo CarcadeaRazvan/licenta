@@ -10,7 +10,6 @@ calendar_bp = Blueprint('calendar', __name__)
 @jwt_required()
 def handle_get_user_events(data):
     user_id = get_jwt_identity()
-    # selected_date = request.json.get('selectedDate')
     selected_date = data['data']['selectedDate']
 
     try:
@@ -33,7 +32,6 @@ def handle_get_user_events(data):
         print(e)
         return jsonify({"msg": "Failed to get user ids"}), 500
     
-    # return jsonify(events=events, currentUser=user_id)
     emit('getEvents', {"activities": activities, "currentUser": user_id}, broadcast=True)
 
 @calendar_bp.route('/get_user_availabilities', methods=['POST'])
@@ -112,6 +110,14 @@ def add_activity():
                 VALUES (%s, %s, %s, %s) RETURNING *
             """, (username, selected_date, start_time, end_time))
 
+            if username != user_id:
+                notification = 'You have been added to the activity {} on {}, {} - {}'.format(activity_name, selected_date, start_time, end_time)
+
+                cur.execute("""
+                    INSERT INTO notifications (username, notification)
+                    VALUES (%s, %s) RETURNING *
+                """, (username, notification))
+
         cur.execute("""
             INSERT INTO activities (activity_name, activity_description, day, start_time, end_time, user_ids)
             VALUES (%s, %s, %s, %s, %s, %s) RETURNING *
@@ -133,14 +139,13 @@ def add_activity():
 @jwt_required()
 def handle_share_event(data):
     user_id = get_jwt_identity()
-    event_id = data['data']['event_id']
+    event_id = data['data']['eventId']
     participants = data['data']['participants']
     selected_date = data['data']['selectedDate']
     start_time = data['data']['startTime']
     end_time = data['data']['endTime']
     usernames = [user['username'] for user in participants]
-
-    print(selected_date)
+    activity_name = data['data']['activityName']
 
     try:
         conn = psycopg2.connect(
@@ -167,6 +172,13 @@ def handle_share_event(data):
                 INSERT INTO availabilities (username, day, start_time, end_time)
                 VALUES (%s, %s, %s, %s) RETURNING *
             """, (username, selected_date, start_time, end_time))
+
+            notification = 'You have been shared the activity {} on {}, {} - {}'.format(activity_name, selected_date, start_time, end_time)
+
+            cur.execute("""
+                INSERT INTO notifications (username, notification)
+                VALUES (%s, %s) RETURNING *
+            """, (username, notification))
 
         cur.execute("""
             UPDATE activities
