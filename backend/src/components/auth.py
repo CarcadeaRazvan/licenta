@@ -4,17 +4,13 @@ from flask_jwt_extended import create_access_token
 from flask_bcrypt import generate_password_hash, check_password_hash
 from datetime import timedelta
 import json
+from components.utils import establish_connection
 
 auth_bp = Blueprint('auth', __name__)
 
 @auth_bp.route('/login', methods=['POST'])
 def login():
-    conn = psycopg2.connect(
-        host="localhost",
-        database="mydatabase",
-        user="postgres",
-        password="admin"
-    )
+    conn = establish_connection()
 
     # execute a SELECT query on the "users" table
     cur = conn.cursor()
@@ -56,13 +52,7 @@ def register():
     hashed_password = generate_password_hash(password).decode('utf-8')
 
     try:
-        conn = psycopg2.connect(
-            host="localhost",
-            database="mydatabase",
-            user="postgres",
-            password="admin",
-            port="5432"
-        )
+        conn = establish_connection()
 
         cursor = conn.cursor()
         cursor.execute("INSERT INTO users (username, password, profile_picture) VALUES (%s, %s, %s)", (username, hashed_password, "default.jpg"))

@@ -3,6 +3,7 @@ import psycopg2
 from flask_socketio import emit
 from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity
 from app import socketio
+from components.utils import establish_connection
 
 rewards_bp = Blueprint('rewards', __name__)
 
@@ -12,13 +13,7 @@ def handle_get_rewards():
     user_id = get_jwt_identity()
 
     try:
-        conn = psycopg2.connect(
-                host="localhost",
-                database="mydatabase",
-                user="postgres",
-                password="admin",
-                port="5432"
-            )
+        conn = establish_connection()
 
         cur = conn.cursor()
 
@@ -33,19 +28,34 @@ def handle_get_rewards():
 
     emit('getRewards', {"rewards": rewards, "currentUser": user_id}, broadcast=True)
 
+@rewards_bp.route('/get_points', methods=['GET'])
+@jwt_required()
+def handle_get_points():
+    user_id = get_jwt_identity()
+
+    try:
+        conn = establish_connection()
+
+        cur = conn.cursor()
+
+        cur.execute("SELECT points FROM users WHERE username = %s", (user_id,))
+        points = cur.fetchone()
+
+        cur.close()
+        conn.close()
+    except psycopg2.Error as e:
+        print(e)
+        return jsonify({"msg": "Failed to get rewards"}), 500
+
+    return jsonify(points=points, currentUser=user_id)
+
 @socketio.on('create_reward')
 @jwt_required()
 def create_reward(data):
     user_id = get_jwt_identity()
 
     try:
-        conn = psycopg2.connect(
-                host="localhost",
-                database="mydatabase",
-                user="postgres",
-                password="admin",
-                port="5432"
-            )
+        conn = establish_connection()
 
         cur = conn.cursor()
 
@@ -72,13 +82,7 @@ def claim_reward():
     reward_id = request.json.get('reward_id')
 
     try:
-        conn = psycopg2.connect(
-                host="localhost",
-                database="mydatabase",
-                user="postgres",
-                password="admin",
-                port="5432"
-            )
+        conn = establish_connection()
 
         cur = conn.cursor()
 
@@ -131,13 +135,7 @@ def get_user_rewards():
     user_id = get_jwt_identity()
 
     try:
-        conn = psycopg2.connect(
-                host="localhost",
-                database="mydatabase",
-                user="postgres",
-                password="admin",
-                port="5432"
-            )
+        conn = establish_connection()
 
         cur = conn.cursor()
 

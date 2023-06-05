@@ -6,6 +6,7 @@ from werkzeug.utils import secure_filename
 import psycopg2
 import os
 from flask import send_file
+from components.utils import establish_connection
 
 profile_bp = Blueprint('profile', __name__)
 
@@ -23,19 +24,12 @@ def get_photo():
     user_id = get_jwt_identity()
 
     try:
-        conn = psycopg2.connect(
-                host="localhost",
-                database="mydatabase",
-                user="postgres",
-                password="admin",
-                port="5432"
-            )
+        conn = establish_connection()
 
         cur = conn.cursor()
 
         cur.execute("SELECT profile_picture FROM users WHERE username = %s", (user_id,))
         profile_picture = cur.fetchone()
-        conn.commit()
 
         cur.close()
         conn.close()
@@ -52,7 +46,6 @@ def display_files(name):
 @profile_bp.route('/upload', methods=['POST'])
 @jwt_required()
 def upload_photo():
-    print(request.files)
     if 'file' not in request.files:
         return {'error': 'No file provided'}, 400
 
@@ -66,13 +59,7 @@ def upload_photo():
     user_id = get_jwt_identity()
 
     try:
-        conn = psycopg2.connect(
-                host="localhost",
-                database="mydatabase",
-                user="postgres",
-                password="admin",
-                port="5432"
-            )
+        conn = establish_connection()
 
         cur = conn.cursor()
 

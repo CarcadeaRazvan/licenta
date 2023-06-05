@@ -4,6 +4,7 @@ from flask_socketio import emit
 from flask_jwt_extended.exceptions import JWTExtendedException
 from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity
 from app import socketio
+from components.utils import establish_connection
 
 notifications_bp = Blueprint('notifications', __name__)
 
@@ -13,13 +14,7 @@ def handle_get_notifications():
     user_id = get_jwt_identity()
 
     try:
-        conn = psycopg2.connect(
-                host="localhost",
-                database="mydatabase",
-                user="postgres",
-                password="admin",
-                port="5432"
-            )
+        conn = establish_connection()
 
         cur = conn.cursor()
 
@@ -42,13 +37,7 @@ def handle_clear_notifications():
     user_id = get_jwt_identity()
 
     try:
-        conn = psycopg2.connect(
-                host="localhost",
-                database="mydatabase",
-                user="postgres",
-                password="admin",
-                port="5432"
-            )
+        conn = establish_connection()
 
         cur = conn.cursor()
 

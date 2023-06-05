@@ -37,3 +37,14 @@ def get_user_ids():
         return jsonify({"msg": "Failed to get user ids"}), 500
 
     return jsonify(users)
+
+def establish_connection():
+    conn = psycopg2.connect(
+                host="localhost",
+                database="mydatabase",
+                user="postgres",
+                password="admin",
+                port="5432"
+            )
+    
+    return conn

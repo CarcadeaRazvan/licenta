@@ -8,6 +8,7 @@ from app import socketio
 import json
 from datetime import datetime
 import re
+from components.utils import establish_connection
 
 encryption_key = 'Vp3abwxq2dFV9x7cGgnTzFAErJqjJ8U0yMB1zzooJlU='
 
@@ -43,25 +44,23 @@ def handle_send_message(data):
     user_id = get_jwt_identity()
     chat_id = data['chat_id']
     encrypted_message = data['message']
-    decrypted_message = decrypt_message(encrypted_message)
-    message = {
-        'username': user_id,
-        'content': encrypted_message,
-        'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    }
-
-    message_json = json.dumps(message)
 
     try:
-        conn = psycopg2.connect(
-                host="localhost",
-                database="mydatabase",
-                user="postgres",
-                password="admin",
-                port="5432"
-            )
+        conn = establish_connection()
 
         cur = conn.cursor()
+
+        cur.execute("SELECT profile_picture FROM users WHERE username = %s", (user_id,))
+        profile_picture = cur.fetchone()
+
+        message = {
+            'username': user_id,
+            'content': encrypted_message,
+            'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'profilePhoto': profile_picture
+        }
+
+        message_json = json.dumps(message)
 
         cur.execute("SELECT chat_id FROM shared_chats WHERE %s = ANY (user_ids) AND chat_id = %s", (user_id, chat_id))
         result = cur.fetchone()
@@ -80,17 +79,19 @@ def handle_send_message(data):
         for message in private_chat[0][2]:
             message['content'] = decrypt_message(message['content'])
 
-        mentioned_username = re.findall(r'@(\w+)', private_chat[0][2][-1]['content'])
+        mentioned_usernames = re.findall(r'@(\w+)', private_chat[0][2][-1]['content'])
 
-        if (mentioned_username[0],) in existing_usernames:
-            if mentioned_username[0] != user_id:
-                notification = 'You have been mentioned in a chat - {}'.format(private_chat[0][1])
+        if len(mentioned_usernames) > 0:
+            for username in mentioned_usernames:
+                if (username,) in existing_usernames:
+                    if username != user_id:
+                        notification = 'You have been mentioned in a chat - {}'.format(private_chat[0][1])
 
-                cur.execute("""
-                            INSERT INTO notifications (username, notification)
-                            VALUES (%s, %s) RETURNING *
-                        """, (mentioned_username[0], notification))
-                conn.commit()
+                        cur.execute("""
+                                    INSERT INTO notifications (username, notification)
+                                    VALUES (%s, %s) RETURNING *
+                                """, (username, notification))
+                        conn.commit()
 
         cur.execute("SELECT chat_id FROM shared_chats WHERE %s = ANY (user_ids)", (user_id,))
         shared_chat_ids = cur.fetchall()
@@ -104,6 +105,34 @@ def handle_send_message(data):
 
     emit('updateChat', {"chatIds": chat_ids, "privateChat": private_chat, "currentUser": user_id}, broadcast=True)
 
+@chat_bp.route('/get_users_from_chat', methods=['POST'])
+@jwt_required()
+def get_users_from_chat():
+    user_id = get_jwt_identity()
+    chat_id = request.json.get('chat_id')
+
+    try:
+        conn = establish_connection()
+
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT id, username FROM users")
+        rows = cursor.fetchall()
+        users = [{'id': row[0], 'username': row[1]} for row in rows]
+
+        cursor.execute("SELECT user_ids FROM shared_chats WHERE chat_id = %s", (chat_id,))
+        usernames = cursor.fetchone()
+
+        filteredUsers = [user for user in users if user['username'] in usernames[0]]
+
+        cursor.close()
+        conn.close()
+    except psycopg2.Error as e:
+        print(e)
+        return jsonify({"msg": "Failed to get user ids"}), 500
+
+    return jsonify(filteredUsers)
+
 @socketio.on('remove_chat')
 @jwt_required()
 def handle_remove_chat(data):
@@ -111,13 +140,7 @@ def handle_remove_chat(data):
     chat_id = data['data']['chat_id']
 
     try:
-        conn = psycopg2.connect(
-                host="localhost",
-                database="mydatabase",
-                user="postgres",
-                password="admin",
-                port="5432"
-            )
+        conn = establish_connection()
 
         cur = conn.cursor()
         cur.execute("DELETE FROM shared_chats WHERE chat_id = %s", (chat_id,))
@@ -149,13 +172,7 @@ def handle_create_chat(data):
     usernames = [user['username'] for user in participants]
 
     try:
-        conn = psycopg2.connect(
-                host="localhost",
-                database="mydatabase",
-                user="postgres",
-                password="admin",
-                port="5432"
-            )
+        conn = establish_connection()
 
         cur = conn.cursor()
 
@@ -196,13 +213,7 @@ def handle_get_shared_chats():
     user_id = get_jwt_identity()
 
     try:
-        conn = psycopg2.connect(
-                host="localhost",
-                database="mydatabase",
-                user="postgres",
-                password="admin",
-                port="5432"
-            )
+        conn = establish_connection()
 
         cur = conn.cursor()
 
@@ -229,13 +240,7 @@ def get_chat_ids():
     user_id = get_jwt_identity()
 
     try:
-        conn = psycopg2.connect(
-            host="localhost",
-            database="mydatabase",
-            user="postgres",
-            password="admin",
-            port="5432"
-        )
+        conn = establish_connection()
 
         cursor = conn.cursor()
         cursor.execute("SELECT chat_id FROM shared_chats WHERE %s = ANY (user_ids)", (user_id,))
@@ -258,13 +263,7 @@ def get_chat_from_ids(data):
     chat_ids = data['chat_data']['chatIds']
 
     try:
-        conn = psycopg2.connect(
-            host="localhost",
-            database="mydatabase",
-            user="postgres",
-            password="admin",
-            port="5432"
-        )
+        conn = establish_connection()
 
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM private_chats WHERE chat_id = ANY(%s)", (chat_ids,))
@@ -286,13 +285,7 @@ def handle_get_messages(data):
     chat_id = data['chat_data']['chat_id']
 
     try:
-        conn = psycopg2.connect(
-                host="localhost",
-                database="mydatabase",
-                user="postgres",
-                password="admin",
-                port="5432"
-            )
+        conn = establish_connection()
 
         cur = conn.cursor()
 
@@ -320,4 +313,23 @@ def handle_get_messages(data):
 
     emit('updateChat', {"chatIds": chat_ids, "privateChat": private_chat, "currentUser": user_id}, broadcast=True)
 
-    
+@chat_bp.route('/get_chat_name', methods=['POST'])
+@jwt_required()
+def get_chat_name():
+    chat_id = request.json.get('chat_id')
+
+    try:
+        conn = establish_connection()
+
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT chat_name FROM private_chats WHERE chat_id = %s", (chat_id,))
+        chat_name = cursor.fetchone()
+
+        cursor.close()
+        conn.close()
+    except psycopg2.Error as e:
+        print(e)
+        return jsonify({"msg": "Failed to get user ids"}), 500
+
+    return jsonify(chat_name)

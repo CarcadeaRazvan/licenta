@@ -11,6 +11,7 @@ const Profile = ({ token }) => {
   const [userData, setUserData] = useState("");
   const [refreshKey, setRefreshKey] = useState(Date.now());
   const [rewards, setRewards] = useState([]);
+  const [points, setPoints] = useState(0);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -71,6 +72,33 @@ const Profile = ({ token }) => {
   }, []);
 
   useEffect(() => {
+    const fetchUserPoints = async () => {
+      try {
+        const response = await fetch(
+          "http://192.168.1.137:5000/rewards/get_points",
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data["currentUser"] == userDataRef.current)
+            setPoints(data["points"]);
+        } else {
+          console.error("Error fetching user points");
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    fetchUserPoints();
+  }, []);
+
+  useEffect(() => {
     const fetchProfilePicture = async () => {
       try {
         const response = await fetch(
@@ -84,8 +112,6 @@ const Profile = ({ token }) => {
 
         if (response.ok) {
           const data = await response.json();
-          // console.log("data[]", data["user_id"]);
-          // console.log("userData", userDataRef.current);
           if (data["user_id"] == userDataRef.current)
             setProfilePhoto(data["profile_picture"]);
         } else {
@@ -112,8 +138,6 @@ const Profile = ({ token }) => {
       aspect: [1, 1],
       quality: 1,
     });
-
-    console.log("result ::", result);
 
     if (!result.canceled) {
       const uri = result["assets"][0]["uri"];
@@ -196,6 +220,9 @@ const Profile = ({ token }) => {
         ) : (
           <Text>You have no rewards yet</Text>
         )}
+        <View>
+          <Text>Current balance: {points}</Text>
+        </View>
 
       </View>
     </View>

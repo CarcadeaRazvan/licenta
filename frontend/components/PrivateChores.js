@@ -78,7 +78,18 @@ const PrivateChores = ({ route }) => {
     fetchUserChores();
   }, []);
 
-  const handleCompleteChore = async (id) => {
+  const handleCompleteChore = (id) => {
+    Alert.alert(
+      'Confirmation',
+      'Are you sure you the chore is completed?',
+      [
+        { text: 'No', style: 'cancel' },
+        { text: 'Yes', style: 'destructive', onPress: () => completeChore(id) },
+      ]
+    );
+  };
+
+  const completeChore = async (id) => {
     const data = {
       chore_id: id,
     };

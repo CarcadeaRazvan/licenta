@@ -3,6 +3,7 @@ import psycopg2
 from flask_socketio import emit
 from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity
 from app import socketio
+from components.utils import establish_connection
 
 calendar_bp = Blueprint('calendar', __name__)
 
@@ -13,13 +14,7 @@ def handle_get_user_events(data):
     selected_date = data['data']['selectedDate']
 
     try:
-        conn = psycopg2.connect(
-                host="localhost",
-                database="mydatabase",
-                user="postgres",
-                password="admin",
-                port="5432"
-            )
+        conn = establish_connection()
 
         cur = conn.cursor()
 
@@ -43,13 +38,7 @@ def get_user_availabilities():
     end_time = request.json.get('endTime')
 
     try:
-        conn = psycopg2.connect(
-                host="localhost",
-                database="mydatabase",
-                user="postgres",
-                password="admin",
-                port="5432"
-            )
+        conn = establish_connection()
 
         cur = conn.cursor()
 
@@ -94,13 +83,7 @@ def add_activity():
     usernames = [user['username'] for user in participants]
 
     try:
-        conn = psycopg2.connect(
-                host="localhost",
-                database="mydatabase",
-                user="postgres",
-                password="admin",
-                port="5432"
-            )
+        conn = establish_connection()
 
         cur = conn.cursor()
 
@@ -148,13 +131,7 @@ def handle_share_event(data):
     activity_name = data['data']['activityName']
 
     try:
-        conn = psycopg2.connect(
-                host="localhost",
-                database="mydatabase",
-                user="postgres",
-                password="admin",
-                port="5432"
-            )
+        conn = establish_connection()
 
         cur = conn.cursor()
 

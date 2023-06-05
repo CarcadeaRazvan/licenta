@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, ScrollView, Alert } from 'react-native';
 import { useNavigation, withNavigation } from '@react-navigation/native';
 import { Button } from 'react-native';
 
@@ -44,13 +44,23 @@ const NotificationsBody = ({ socket, token }) => {
     socket.emit("get_notifications");
 
     socket.on("getNotifications", (data) => {
-      console.log(data);
         if (userDataRef.current == data["currentUser"])
           setNotifications(data["notifications"]);
     });
   }, []);
 
-  const handleClearNotifications = async () => {
+  const handleClearNotifications = () => {
+    Alert.alert(
+      'Confirmation',
+      'Are you sure you want to delete all notifications?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Delete', style: 'destructive', onPress: () => clearNotifications() },
+      ]
+    );
+  };
+
+  const clearNotifications = async () => {
     socket.emit("clear_notifications");
   };
 

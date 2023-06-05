@@ -29,7 +29,6 @@ const SharedCalendarBody = ({ token, socket }) => {
   const [userData, setUserData] = useState("");
 
   const handleDateSelect = (date) => {
-    console.log("Selected date:", date);
     setEvents([]);
     setSelectedDate(date.dateString);
   };
@@ -94,7 +93,6 @@ const SharedCalendarBody = ({ token, socket }) => {
 
       if (response.ok) {
         const data = await response.json();
-        console.log(data);
         setEvents(data["activities"]);
       } else {
         console.error("Error creating activity");
@@ -166,7 +164,6 @@ const SharedCalendarBody = ({ token, socket }) => {
       socket.emit("get_user_events", { data });
 
       socket.on("getEvents", (data) => {
-        console.log(data);
         if (userDataRef.current == data["currentUser"])
           setEvents(data["activities"]);
       });

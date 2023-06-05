@@ -4,6 +4,7 @@ from flask_socketio import emit
 from flask_jwt_extended.exceptions import JWTExtendedException
 from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity
 from app import socketio
+from components.utils import establish_connection
 
 shopping_bp = Blueprint('shopping', __name__)
 
@@ -14,13 +15,7 @@ def get_list_ids():
     user_id = get_jwt_identity()
 
     try:
-        conn = psycopg2.connect(
-            host="localhost",
-            database="mydatabase",
-            user="postgres",
-            password="admin",
-            port="5432"
-        )
+        conn = establish_connection()
 
         cursor = conn.cursor()
         cursor.execute("SELECT list_id FROM shared_lists WHERE %s = ANY (user_ids)", (user_id,))
@@ -43,13 +38,7 @@ def get_list_from_ids(data):
     list_ids = data['list_data']['listIds']
 
     try:
-        conn = psycopg2.connect(
-            host="localhost",
-            database="mydatabase",
-            user="postgres",
-            password="admin",
-            port="5432"
-        )
+        conn = establish_connection()
 
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM shopping_lists WHERE list_id = ANY(%s)", (list_ids,))
@@ -70,13 +59,7 @@ def handle_get_shared_lists():
     user_id = get_jwt_identity()
 
     try:
-        conn = psycopg2.connect(
-                host="localhost",
-                database="mydatabase",
-                user="postgres",
-                password="admin",
-                port="5432"
-            )
+        conn = establish_connection()
 
         cur = conn.cursor()
 
@@ -104,13 +87,7 @@ def handle_get_items(data):
     list_id = data['list_data']['list_id']
 
     try:
-        conn = psycopg2.connect(
-                host="localhost",
-                database="mydatabase",
-                user="postgres",
-                password="admin",
-                port="5432"
-            )
+        conn = establish_connection()
 
         cur = conn.cursor()
 
@@ -143,13 +120,7 @@ def handle_add_item(data):
     item = data['data']['item']
 
     try:
-        conn = psycopg2.connect(
-                host="localhost",
-                database="mydatabase",
-                user="postgres",
-                password="admin",
-                port="5432"
-            )
+        conn = establish_connection()
 
         cur = conn.cursor()
 
@@ -186,13 +157,7 @@ def handle_remove_item(data):
     index = data['data']['index']
 
     try:
-        conn = psycopg2.connect(
-                host="localhost",
-                database="mydatabase",
-                user="postgres",
-                password="admin",
-                port="5432"
-            )
+        conn = establish_connection()
 
         cur = conn.cursor()
         cur.execute("SELECT * FROM shopping_lists WHERE list_id = %s", (list_id,))
@@ -229,13 +194,7 @@ def handle_remove_list(data):
     list_id = data['data']['list_id']
 
     try:
-        conn = psycopg2.connect(
-                host="localhost",
-                database="mydatabase",
-                user="postgres",
-                password="admin",
-                port="5432"
-            )
+        conn = establish_connection()
 
         cur = conn.cursor()
         cur.execute("SELECT user_ids FROM shared_lists WHERE list_id = %s", (list_id,))
@@ -281,13 +240,7 @@ def handle_create_list(data):
     usernames = [user['username'] for user in participants]
 
     try:
-        conn = psycopg2.connect(
-                host="localhost",
-                database="mydatabase",
-                user="postgres",
-                password="admin",
-                port="5432"
-            )
+        conn = establish_connection()
 
         cur = conn.cursor()
 
@@ -324,3 +277,24 @@ def handle_create_list(data):
         return jsonify({"msg": "Failed to create list"}), 500
 
     emit('updateLists', {"listId": list_id, "listIds": list_ids, "shoppingLists": shopping_lists, "currentUser": user_id}, broadcast=True)
+
+@shopping_bp.route('/get_list_name', methods=['POST'])
+@jwt_required()
+def get_list_name():
+    list_id = request.json.get('list_id')
+
+    try:
+        conn = establish_connection()
+
+        cursor = conn.cursor()
+
+        cursor.execute("SELECT list_name FROM shopping_lists WHERE list_id = %s", (list_id,))
+        list_name = cursor.fetchone()
+
+        cursor.close()
+        conn.close()
+    except psycopg2.Error as e:
+        print(e)
+        return jsonify({"msg": "Failed to get user ids"}), 500
+
+    return jsonify(list_name)

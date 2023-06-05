@@ -7,6 +7,7 @@ import {
   Modal,
   TextInput,
   Button,
+  Alert,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 
@@ -20,7 +21,18 @@ const ChoreBody = ({
 }) => {
   const navigation = useNavigation();
 
-  const handleAssignChore = async () => {
+  const handleAssignChore = () => {
+    Alert.alert(
+      'Confirmation',
+      'Are you sure you want to assign this chore?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Assign', style: 'destructive', onPress: () => assignChore() },
+      ]
+    );
+  };
+
+  const assignChore = async () => {
     const data = {
       chore_id: choreId,
     };

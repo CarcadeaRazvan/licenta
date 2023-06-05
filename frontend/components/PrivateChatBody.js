@@ -11,6 +11,7 @@ import {
   FlatList,
   Keyboard,
   Platform,
+  Image,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 
@@ -19,6 +20,11 @@ const PrivateChatBody = ({ socket, token, chatId }) => {
   const [userData, setUserData] = useState("");
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState([]);
+  const [usernames, setUsernames] = useState([]);
+  const [filteredUsers, setFilteredUsers] = useState([]);
+  const inputRef = useRef(null);
+  const [isMentioning, setIsMentioning] = useState(false);
+  const [chatName, setChatName] = useState("");
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -80,6 +86,7 @@ const PrivateChatBody = ({ socket, token, chatId }) => {
 
     socket.emit("sendMessage", data);
     setMessage("");
+    setIsMentioning(false);
   };
 
   const encryptMessage = async (message) => {
@@ -102,25 +109,93 @@ const PrivateChatBody = ({ socket, token, chatId }) => {
     }
   };
 
-  // const decryptMessage = async (ciphertext) => {
-  //   try {
-  //     const response = await fetch("http://192.168.1.128:5000/chat/decrypt", {
-  //       method: "POST",
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //         Authorization: `Bearer ${token}`,
-  //       },
-  //       body: JSON.stringify({
-  //         ciphertext: ciphertext,
-  //       }),
-  //     });
+  useEffect(() => {
+    const data = {
+      chat_id: chatId,
+    };
 
-  //     const data = await response.json();
-  //     return data.plaintext;
-  //   } catch (error) {
-  //     console.error("Error decrypting message:", error);
-  //   }
-  // };
+    const handleMentionUser = async () => {
+      try {
+        const response = await fetch(
+          "http://192.168.1.137:5000/chat/get_users_from_chat",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(data),
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          setUsernames(data);
+        } else {
+          console.error("Error fetching user data");
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    handleMentionUser();
+  }, []);
+
+  useEffect(() => {
+    const data = {
+      chat_id: chatId,
+    };
+
+    const handleGetChatName = async () => {
+      try {
+        const response = await fetch(
+          "http://192.168.1.137:5000/chat/get_chat_name",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(data),
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          setChatName(data);
+        } else {
+          console.error("Error fetching chat name");
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    handleGetChatName();
+  }, []);
+
+  const handleInputChange = (text) => {
+    setMessage(text);
+
+    if (text.includes('@')) {
+      setIsMentioning(true);
+      const query = text.match(/@(\w*)$/)?.[1]?.toLowerCase();
+      const filtered = usernames.filter((user) => user.username.toLowerCase().includes(query));
+      setFilteredUsers(filtered);
+    } else {
+      setIsMentioning(false);
+      setFilteredUsers([]);
+    }
+  };
+
+  const handleUserSelection = (username) => {
+    const newText = message.replace(/@\w*$/, `@${username}`);
+    setMessage(newText);
+    setFilteredUsers([]);
+    setIsMentioning(false);
+    Keyboard.dismiss();
+  };
 
   return (
     <View style={styles.individualContainer}>
@@ -129,7 +204,7 @@ const PrivateChatBody = ({ socket, token, chatId }) => {
           <Text style={styles.individualBackButton}>Back</Text>
         </TouchableOpacity>
         <View>
-          <Text> Chat Title </Text>
+          <Text style={styles.headerText}> {chatName} </Text>
         </View>
       </View>
 
@@ -141,6 +216,15 @@ const PrivateChatBody = ({ socket, token, chatId }) => {
             key={`${item.content}-${item.timestamp}`}
             style={styles.messageContainer}
           >
+            {item.profilePhoto && (
+              <Image
+                source={{
+                  uri: `http://192.168.1.137:5000/profile/image/${item.profilePhoto}`,
+                }}
+                style={styles.profilePhoto}
+                resizeMode="contain"
+              />
+            )}
             <View style={styles.messageContent}>
               <Text style={styles.username}>{item.username}</Text>
               <Text style={styles.messageText}>{item.content}</Text>
@@ -153,6 +237,24 @@ const PrivateChatBody = ({ socket, token, chatId }) => {
         }
       />
 
+      {isMentioning && (
+        <View  style={styles.userListContainer}>
+          <FlatList
+            data={filteredUsers}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                style={styles.userItem}
+                onPress={() => handleUserSelection(item.username)}
+              >
+                <Text>{item.username}</Text>
+              </TouchableOpacity>
+            )}
+            contentContainerStyle={styles.userList}
+          />
+        </View>
+      )}
+
       <KeyboardAvoidingView
         style={styles.container}
         behavior="padding"
@@ -160,9 +262,10 @@ const PrivateChatBody = ({ socket, token, chatId }) => {
       >
         <View style={[styles.inputContainer]}>
           <TextInput
+            ref={inputRef}
             style={styles.input}
             value={message}
-            onChangeText={(text) => setMessage(text)}
+            onChangeText={handleInputChange}
             placeholder="Type a message..."
           />
           <Button title="Send" onPress={handleMessageSend} />
@@ -181,11 +284,13 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginVertical: 5,
   },
-  userPhoto: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    marginRight: 10,
+  headerText: {
+    // flex: 1,
+    textAlign: "center",
+    fontWeight: "bold",
+    fontSize: 20,
+    // marginTop: 50,
+    marginRight: 120,
   },
   messageContent: {
     flex: 1,
@@ -254,6 +359,32 @@ const styles = StyleSheet.create({
   },
   messageList: {
     flex: 1,
+  },
+  profilePhoto: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 10,
+  },
+  // userList: {
+  //   marginTop: 10,
+  // },
+  userItem: {
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+    height: 50,
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+  },
+  userListContainer: {
+    position: 'absolute',
+    bottom: 30,
+    left: 25,
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    elevation: 5,
+    zIndex: 999,
   },
 });
 

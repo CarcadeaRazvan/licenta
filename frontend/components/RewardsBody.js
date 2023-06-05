@@ -74,7 +74,18 @@ const RewardsBody = ({ socket, token }) => {
     });
   }, []);
 
-  const handleClaimReward = async (id) => {
+  const handleClaimReward = (id) => {
+    Alert.alert(
+      'Confirmation',
+      'Are you sure you want to claim this reward?',
+      [
+        { text: 'No', style: 'cancel' },
+        { text: 'Yes', style: 'destructive', onPress: () => claimReward(id) },
+      ]
+    );
+  };
+
+  const claimReward = async (id) => {
     const data = {
       reward_id: id,
     };

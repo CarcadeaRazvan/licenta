@@ -1,15 +1,10 @@
 from flask import jsonify
 import psycopg2
+from components.utils import establish_connection
 
 def init():
     try:
-        conn = psycopg2.connect(
-            host="localhost",
-            database="mydatabase",
-            user="postgres",
-            password="admin",
-            port="5432"
-        )
+        conn = establish_connection()
 
         cursor = conn.cursor()
         cursor.execute("""

@@ -7,6 +7,7 @@ import {
   Modal,
   TextInput,
   Button,
+  Alert,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 
@@ -16,6 +17,7 @@ const ShoppingListBody = ({ socket, token, listId }) => {
   const [itemName, setItemName] = useState("");
   const [itemList, setItemList] = useState([]);
   const [userData, setUserData] = useState("");
+  const [listName, setListName] = useState("");
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -50,6 +52,39 @@ const ShoppingListBody = ({ socket, token, listId }) => {
   }, [userData]);
 
   useEffect(() => {
+    const data = {
+      list_id: listId,
+    };
+
+    const handleGetListName = async () => {
+      try {
+        const response = await fetch(
+          "http://192.168.1.137:5000/shopping/get_list_name",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(data),
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          setListName(data);
+        } else {
+          console.error("Error fetching list name");
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+    handleGetListName();
+  }, []);
+
+  useEffect(() => {
     const list_data = {
       list_id: listId,
     };
@@ -79,6 +114,17 @@ const ShoppingListBody = ({ socket, token, listId }) => {
   };
 
   const handleRemoveItem = async (index) => {
+    Alert.alert(
+      'Confirmation',
+      'Are you sure you want to delete this item?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Delete', style: 'destructive', onPress: () => removeItem(index) },
+      ]
+    );
+  };
+
+  const removeItem = async (index) => {
     const data = {
       index: index,
       list_id: listId,
@@ -87,7 +133,18 @@ const ShoppingListBody = ({ socket, token, listId }) => {
     socket.emit("remove_item_from_list", { data });
   };
 
-  const handleRemoveList = async () => {
+  const handleRemoveList = () => {
+    Alert.alert(
+      'Confirmation',
+      'Are you sure you want to delete this list?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Delete', style: 'destructive', onPress: () => removeList() },
+      ]
+    );
+  };
+
+  const removeList = async () => {
     const data = {
       list_id: listId,
     };
@@ -104,7 +161,7 @@ const ShoppingListBody = ({ socket, token, listId }) => {
           <Text style={styles.individualBackButton}>Back</Text>
         </TouchableOpacity>
         <View>
-          <Text> List Title </Text>
+        <Text style={styles.headerText}> {listName} </Text>
         </View>
         <TouchableOpacity onPress={() => setModalVisible(true)}>
           <Text style={styles.individualAddButton}>+</Text>
@@ -112,7 +169,6 @@ const ShoppingListBody = ({ socket, token, listId }) => {
       </View>
 
       <View>
-        <Text> List ID: {listId}</Text>
         <View>
           {itemList.map((item) =>
             item[2]
@@ -161,6 +217,14 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "white",
     padding: 20,
+  },
+  headerText: {
+    // flex: 1,
+    textAlign: "center",
+    fontWeight: "bold",
+    fontSize: 20,
+    // marginTop: 50,
+    // marginRight: 120,
   },
   individualHeader: {
     flexDirection: "row",
