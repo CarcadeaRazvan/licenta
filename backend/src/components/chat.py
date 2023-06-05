@@ -7,6 +7,7 @@ from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity
 from app import socketio
 import json
 from datetime import datetime
+import re
 
 encryption_key = 'Vp3abwxq2dFV9x7cGgnTzFAErJqjJ8U0yMB1zzooJlU='
 
@@ -40,7 +41,6 @@ def decrypt_message(ciphertext):
 @jwt_required()
 def handle_send_message(data):
     user_id = get_jwt_identity()
-    print(data)
     chat_id = data['chat_id']
     encrypted_message = data['message']
     decrypted_message = decrypt_message(encrypted_message)
@@ -74,15 +74,23 @@ def handle_send_message(data):
         cur.execute("SELECT * FROM private_chats WHERE chat_id = %s", (chat_id,))
         private_chat = cur.fetchall()
 
+        cur.execute("SELECT username FROM users")
+        existing_usernames = cur.fetchall()
+
         for message in private_chat[0][2]:
             message['content'] = decrypt_message(message['content'])
 
-        # print(private_chat[0][2])
-        
-        # for _, __, messages in private_chat:
-        #     for i, encrypted_message in enumerate(messages):
-        #         decrypted_message = decrypt_message(encrypted_message)
-        #         messages[i] = decrypted_message
+        mentioned_username = re.findall(r'@(\w+)', private_chat[0][2][-1]['content'])
+
+        if (mentioned_username[0],) in existing_usernames:
+            if mentioned_username[0] != user_id:
+                notification = 'You have been mentioned in a chat - {}'.format(private_chat[0][1])
+
+                cur.execute("""
+                            INSERT INTO notifications (username, notification)
+                            VALUES (%s, %s) RETURNING *
+                        """, (mentioned_username[0], notification))
+                conn.commit()
 
         cur.execute("SELECT chat_id FROM shared_chats WHERE %s = ANY (user_ids)", (user_id,))
         shared_chat_ids = cur.fetchall()
@@ -299,11 +307,6 @@ def handle_get_messages(data):
 
         for message in private_chat[0][2]:
             message['content'] = decrypt_message(message['content'])
-
-        # for _, __, messages in private_chat:
-        #     for i, encrypted_message in enumerate(messages):
-        #         decrypted_message = decrypt_message(encrypted_message)
-        #         messages[i] = decrypted_message
 
         cur.execute("SELECT chat_id FROM shared_chats WHERE %s = ANY (user_ids)", (user_id,))
         shared_chat_ids = cur.fetchall()

@@ -147,15 +147,19 @@ def get_user_rewards():
             WHERE username = %(user_id)s
         """, {'user_id': user_id})
 
-        rewards_ids = cur.fetchone()[0]
+        rewards_ids = cur.fetchone()
 
-        cur.execute("""
-            SELECT *
-            FROM rewards
-            WHERE reward_id IN %(rewards_ids)s
-        """, {'rewards_ids': tuple(rewards_ids)})
+        if rewards_ids[0]:
 
-        rewards = cur.fetchall()
+            cur.execute("""
+                SELECT *
+                FROM rewards
+                WHERE reward_id IN %(rewards_ids)s
+            """, {'rewards_ids': tuple(rewards_ids[0])})
+
+            rewards = cur.fetchall()
+        else:
+            rewards = []
 
     except psycopg2.Error as e:
         print(e)

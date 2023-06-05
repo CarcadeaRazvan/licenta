@@ -64,5 +64,4 @@ def handle_clear_notifications():
         print(e)
         return jsonify({"msg": "Failed to delete chat"}), 500
 
-    # Emit a message to all connected clients with the updated shopping chat
     emit('getNotifications', {"notifications": notifications, "currentUser": user_id}, broadcast=True)

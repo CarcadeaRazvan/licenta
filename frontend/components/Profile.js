@@ -58,7 +58,6 @@ const Profile = ({ token }) => {
 
         if (response.ok) {
           const data = await response.json();
-          console.log(data);
           setRewards(data["rewards"]);
         } else {
           console.error("Error fetching user rewards");
@@ -182,17 +181,22 @@ const Profile = ({ token }) => {
         )}
         <Button title="Select Profile Photo" onPress={pickImage} />
         <Text style={styles.rewardsHeaderText}>My rewards</Text>
-        <FlatList
-          data={rewards}
-          keyExtractor={(item) => item[0].toString()}
-          contentContainerStyle={styles.rewardListContainer}
-          renderItem={({ item }) => (
-            <View style={styles.rewardItem}>
-              <Text style={styles.rewardName}>{item[1]}</Text>
-              <Text style={styles.rewardDescription}>{item[2]}</Text>
-            </View>
-          )}
-        />
+        {rewards.length > 0 ? (
+          <FlatList
+            data={rewards}
+            keyExtractor={(item) => item[0].toString()}
+            contentContainerStyle={styles.rewardListContainer}
+            renderItem={({ item }) => (
+              <View style={styles.rewardItem}>
+                <Text style={styles.rewardName}>{item[1]}</Text>
+                <Text style={styles.rewardDescription}>{item[2]}</Text>
+              </View>
+            )}
+          />
+        ) : (
+          <Text>You have no rewards yet</Text>
+        )}
+
       </View>
     </View>
   );

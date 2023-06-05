@@ -123,25 +123,29 @@ const RewardsBody = ({ socket, token }) => {
         </TouchableOpacity>
       </View>
 
-      <FlatList
-        data={rewards.map((reward) => ({
-          id: reward[0],
-          name: reward[1],
-          description: reward[2],
-          price: reward[3],
-        }))}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
-          <TouchableOpacity onPress={() => handleClaimReward(item.id)}>
-            <View style={styles.listItem}>
-              <Text style={styles.listItemText}>{item.name}</Text>
-              <Text style={styles.listItemText}>{item.description}</Text>
-              <Text style={styles.listItemText}>{item.price}</Text>
-            </View>
-          </TouchableOpacity>
-        )}
-        contentContainerStyle={styles.listContainer}
-      />
+      {rewards.length > 0 ? (
+        <FlatList
+          data={rewards.map((reward) => ({
+            id: reward[0],
+            name: reward[1],
+            description: reward[2],
+            price: reward[3],
+          }))}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={({ item }) => (
+            <TouchableOpacity onPress={() => handleClaimReward(item.id)}>
+              <View style={styles.listItem}>
+                <Text style={styles.listItemText}>{item.name}</Text>
+                <Text style={styles.listItemText}>{item.description}</Text>
+                <Text style={styles.listItemText}>{item.price}</Text>
+              </View>
+            </TouchableOpacity>
+          )}
+          contentContainerStyle={styles.listContainer}
+        />
+      ) : (
+        <Text>There are no available rewards yet</Text>
+      )}
 
       <Modal visible={modalVisible} animationType="slide" transparent={true}>
         <View style={styles.modalContainer}>
