@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Image, FlatList } from "react
 import { useNavigation, withNavigation } from "@react-navigation/native";
 import * as ImagePicker from "expo-image-picker";
 import { Button } from "react-native";
+import { StatusBar } from "expo-status-bar";
 
 const Profile = ({ token }) => {
   const navigation = useNavigation();
@@ -181,6 +182,7 @@ const Profile = ({ token }) => {
 
   return (
     <View style={styles.container}>
+      <StatusBar style="light" />
       <View style={styles.header}>
         <TouchableOpacity onPress={handleGoBack}>
           <Text style={styles.backButton}>Back</Text>

@@ -4,6 +4,7 @@ import { useNavigation, withNavigation } from "@react-navigation/native";
 import { Button } from "react-native";
 import { io } from "socket.io-client";
 import RewardsBody from "./RewardsBody";
+import { StatusBar } from "expo-status-bar";
 
 const Rewards = ({ route }) => {
   const { token } = route.params;

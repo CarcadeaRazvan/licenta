@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 import psycopg2
 from flask_socketio import emit
-from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from app import socketio
 from components.utils import establish_connection
 
@@ -46,15 +46,12 @@ def complete_chore():
         """, {'chore_id': chore_id})
 
         chore_reward = cur.fetchone()[0]
-        print(chore_reward)
-        print(user_id)
 
         cur.execute("""
             UPDATE users
             SET points = points + %(chore_reward)s
             WHERE username = %(assigned_user)s
         """, {'chore_reward': chore_reward, 'assigned_user': user_id})
-        conn.commit()
 
         cur.execute("DELETE FROM chores WHERE chore_id = %s", (chore_id,))
         conn.commit()
@@ -80,7 +77,6 @@ def handle_get_chores():
 
         cur = conn.cursor()
 
-        # Fetch the shopping lists based on the list IDs from the shopping_lists table
         cur.execute("SELECT * FROM chores WHERE assigned_user IS NULL")
         chores = cur.fetchall()
 
@@ -89,8 +85,6 @@ def handle_get_chores():
     except psycopg2.Error as e:
         print(e)
         return jsonify({"msg": "Failed to get shared lists"}), 500
-
-    # return jsonify(chores=chores, currentUser=user_id)
 
     emit('getChores', {"chores": chores, "currentUser": user_id}, broadcast=True)
 
@@ -104,7 +98,6 @@ def create_chore(data):
 
         cur = conn.cursor()
 
-        # Fetch the shared lists for the user from the shared_lists table
         cur.execute("INSERT INTO chores (chore_name, chore_description, chore_reward) VALUES (%s, %s, %s) RETURNING *",
                 (data["data"]["chore_name"], data["data"]["chore_description"], int(data["data"]["chore_reward"])))
         
@@ -131,7 +124,6 @@ def assign_chore(data):
 
         cur = conn.cursor()
 
-        # Fetch the shared lists for the user from the shared_lists table
         cur.execute("UPDATE chores SET assigned_user = %s WHERE chore_id = %s", (user_id, data["data"]["chore_id"]))
         conn.commit()
 

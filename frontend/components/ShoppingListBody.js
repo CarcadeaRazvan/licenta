@@ -10,6 +10,7 @@ import {
   Alert,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { StatusBar } from "expo-status-bar";
 
 const ShoppingListBody = ({ socket, token, listId }) => {
   const navigation = useNavigation();
@@ -156,6 +157,7 @@ const ShoppingListBody = ({ socket, token, listId }) => {
 
   return (
     <View style={styles.individualContainer}>
+      <StatusBar style="light" />
       <View style={styles.individualHeader}>
         <TouchableOpacity onPress={handleGoBack}>
           <Text style={styles.individualBackButton}>Back</Text>

@@ -1,12 +1,13 @@
 import React, { useState } from "react";
 import { View, StyleSheet, Text, TouchableOpacity } from "react-native";
 import { useNavigation, withNavigation } from "@react-navigation/native";
+import { LinearGradient } from 'expo-linear-gradient';
+import { StatusBar } from "expo-status-bar";
 
 const calculateAngle = (i, n) => 90 - (360 / n) * i;
 
 const CircleButton = ({ index, total, label }) => {
   const angle = calculateAngle(index, total);
-  const isUpperHalf = index < total / 2;
   const rotation = 180 - angle;
 
   const navigation = useNavigation();
@@ -52,18 +53,24 @@ const LandingPage = ({ navigation, onLogout }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.greet}>Welcome, X</Text>
-      {features.map((feature, index) => (
-        <CircleButton
-          key={index}
-          index={index}
-          total={features.length}
-          label={feature.label}
-        />
-      ))}
-      <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
-        <Text style={styles.logoutButtonText}>Log out</Text>
-      </TouchableOpacity>
+      <StatusBar style="dark" />
+      <LinearGradient
+        colors={['#772cf9', '#040209']}
+        style={styles.linearGradient}
+      >
+        <Text style={styles.greet}>Together</Text>
+        {features.map((feature, index) => (
+          <CircleButton
+            key={index}
+            index={index}
+            total={features.length}
+            label={feature.label}
+          />
+        ))}
+        <TouchableOpacity onPress={handleLogout} style={styles.logoutButton}>
+          <Text style={styles.logoutButtonText}>Log out</Text>
+        </TouchableOpacity>
+      </LinearGradient>
     </View>
   );
 };
@@ -73,38 +80,44 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#696969",
+  },
+  linearGradient: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 5,
+    height: 850,
+    width: 400,
   },
   circleButton: {
     position: "absolute",
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: "#ba55d3",
+    backgroundColor: "#611abe",
     alignItems: "center",
     justifyContent: "center",
   },
   circleButtonLabel: {
-    color: "#fff",
-    fontSize: 20,
+    color: "#ffffff",
+    fontSize: 18,
+    fontStyle: 'italic',
   },
   logoutButton: {
     position: "absolute",
-    bottom: 30,
-    backgroundColor: "lightblue",
-    padding: 10,
-    borderRadius: 10,
+    bottom: 40,
   },
   logoutButtonText: {
     color: "white",
     fontWeight: "bold",
-    fontSize: 20,
+    fontSize: 25,
   },
   greet: {
-    position: "absolute",
-    fontSize: 25,
-    alignSelf: "center",
-    color: "#000000",
+    fontSize: 60,
+    marginTop: -630,
+    color: "#19191a",
+    // fontFamily: 'normal',
+    // fontStyle: 'italic',
+    fontWeight: 'bold',
   },
 });
 

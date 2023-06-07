@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, ScrollView, Alert } from 'react-native';
 import { useNavigation, withNavigation } from '@react-navigation/native';
-import { Button } from 'react-native';
+import { StatusBar } from "expo-status-bar";
 
 const NotificationsBody = ({ socket, token }) => {
   const navigation = useNavigation();
@@ -70,6 +70,7 @@ const NotificationsBody = ({ socket, token }) => {
 
   return (
     <View style={styles.container}>
+      <StatusBar style="light" />
       <View style={styles.header}>
         <TouchableOpacity onPress={handleGoBack}>
           <Text style={styles.backButton}>Back</Text>

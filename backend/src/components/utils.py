@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, jsonify
 from flask_jwt_extended.exceptions import JWTExtendedException
 from flask_jwt_extended import jwt_required, get_jwt_identity
 import psycopg2

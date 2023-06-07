@@ -48,6 +48,7 @@ const ChoreBody = ({
 
   return (
     <View style={styles.individualContainer}>
+      <StatusBar style="light" />
       <View style={styles.individualHeader}>
         <TouchableOpacity onPress={handleGoBack}>
           <Text style={styles.individualBackButton}>Back</Text>

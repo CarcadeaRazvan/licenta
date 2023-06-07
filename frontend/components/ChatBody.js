@@ -11,6 +11,8 @@ import {
   Switch,
 } from "react-native";
 import { useNavigation, withNavigation } from "@react-navigation/native";
+import { StatusBar } from "expo-status-bar";
+import { LinearGradient } from 'expo-linear-gradient';
 
 const ChatBody = ({ socket, token }) => {
   const navigation = useNavigation();
@@ -133,6 +135,7 @@ const ChatBody = ({ socket, token }) => {
     socket.emit("create_chat", { data });
 
     setModalVisible(false);
+    setChatName("");
   };
 
   const isSelected = (user) => {
@@ -155,16 +158,22 @@ const ChatBody = ({ socket, token }) => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={handleGoBack}>
-          <Text style={styles.backButton}>Back</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerText}>Chat</Text>
-        <View style={styles.spacer} />
-        <TouchableOpacity onPress={handleChatCreate}>
-          <Text style={styles.addButton}>+</Text>
-        </TouchableOpacity>
-      </View>
+      <StatusBar style="light" />
+      <LinearGradient
+        colors={['#000000', '#333338']}
+        style={styles.linearGradient}
+      >
+        <View style={styles.header}>
+          <TouchableOpacity onPress={handleGoBack}>
+            <Text style={styles.backButton}>Back</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerText}>Chat</Text>
+          <View style={styles.spacer} />
+          <TouchableOpacity onPress={handleChatCreate}>
+            <Text style={styles.addButton}>+</Text>
+          </TouchableOpacity>
+        </View>
+      </LinearGradient>
       <FlatList
         data={privateChats.map((chat) => ({
           id: chat[0],
@@ -190,7 +199,10 @@ const ChatBody = ({ socket, token }) => {
       <Modal visible={modalVisible} animationType="slide" transparent={true}>
         <View style={styles.modalContainer}>
           <TextInput
+            style={styles.input}
+            placeholderTextColor="#ccc"
             placeholder="Enter chat name"
+            keyboardAppearance="dark"
             value={chatName}
             onChangeText={(text) => setChatName(text)}
           />
@@ -202,17 +214,24 @@ const ChatBody = ({ socket, token }) => {
             }))}
             renderItem={({ item }) => (
               <View style={styles.userItem}>
+                <Text style={styles.username}>{item.username}</Text>
                 <Switch
                   value={isSelected(item)}
                   onValueChange={() => handleUserSelection(item)}
                 />
-                <Text>{item.username}</Text>
               </View>
             )}
           />
 
-          <Button title="Create Chat" onPress={handleCreateChat} />
-          <Button title="Cancel" onPress={() => setModalVisible(false)} />
+          <TouchableOpacity onPress={handleCreateChat}>
+            <Text style={styles.createButton}>Create Chat</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => {
+              setModalVisible(false);
+              setChatName("");
+            }}>
+            <Text style={styles.cancelButton}>Cancel</Text>
+          </TouchableOpacity>
         </View>
       </Modal>
     </View>
@@ -222,24 +241,35 @@ const ChatBody = ({ socket, token }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#333338",
+  },
+  linearGradient: {
+    height: 100,
+    width: 400,
   },
   header: {
-    backgroundColor: "#FFFFFF",
     flexDirection: "row",
     alignItems: "center",
-    height: 80,
   },
   headerText: {
     flex: 1,
+    color: "#ccc",
     textAlign: "center",
     fontWeight: "bold",
     fontSize: 25,
-    marginTop: 50,
-    marginLeft: -15,
+    marginTop: 30,
+    marginLeft: 35,
   },
   backButton: {
-    marginLeft: 30,
-    marginTop: 50,
+    color: "#ccc",
+    marginLeft: 20,
+    marginTop: 55,
+    fontSize: 18,
+  },
+  addButton: {
+    color: "#ccc",
+    marginRight: 30,
+    marginTop: 55,
     fontSize: 18,
   },
   spacer: {
@@ -254,33 +284,56 @@ const styles = StyleSheet.create({
     fontSize: 20,
   },
   chatContainer: {
-    paddingTop: 20,
-    paddingHorizontal: 20,
+    paddingTop: 10,
+    paddingHorizontal: 10,
   },
   chatItem: {
-    backgroundColor: "#ffffff",
+    backgroundColor: "#66666b",
     borderRadius: 10,
     padding: 20,
     marginBottom: 10,
   },
   chatItemText: {
     fontSize: 18,
+    color: "#111214",
     fontWeight: "bold",
   },
   modalContainer: {
     flex: 1,
-    marginTop: 60,
+    marginTop: 300,
     padding: 20,
-    backgroundColor: "white",
+    backgroundColor: "#202022",
   },
   userItem: {
     flexDirection: "row",
     alignItems: "center",
-    marginVertical: 10,
+    justifyContent: "space-between",
+    paddingVertical: 10,
+    borderBottomColor: "#ccc",
   },
-  addButton: {
-    marginRight: 30,
-    marginTop: 50,
+  username: {
+    fontWeight: "bold",
+    fontSize: 16,
+    paddingRight: 50,
+    color: "#ccc"
+  },
+  input: {
+    fontSize: 18,
+    marginTop: 20,
+    marginLeft: 110,
+    marginBottom: 40,
+    color: "#ccc",
+  },
+  createButton: {
+    color: "#ccc",
+    marginLeft: 120,
+    marginBottom: 35,
+    fontSize: 22,
+  },
+  cancelButton: {
+    color: "#ccc",
+    marginLeft: 145,
+    marginBottom: 35,
     fontSize: 18,
   },
 });

@@ -2,8 +2,7 @@ from flask import Blueprint, request, jsonify
 from cryptography.fernet import Fernet
 import psycopg2
 from flask_socketio import emit
-from flask_jwt_extended.exceptions import JWTExtendedException
-from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from app import socketio
 import json
 from datetime import datetime
@@ -108,7 +107,6 @@ def handle_send_message(data):
 @chat_bp.route('/get_users_from_chat', methods=['POST'])
 @jwt_required()
 def get_users_from_chat():
-    user_id = get_jwt_identity()
     chat_id = request.json.get('chat_id')
 
     try:
@@ -144,7 +142,6 @@ def handle_remove_chat(data):
 
         cur = conn.cursor()
         cur.execute("DELETE FROM shared_chats WHERE chat_id = %s", (chat_id,))
-        conn.commit()
 
         cur.execute("DELETE FROM private_chats WHERE chat_id = %s", (chat_id,))
         conn.commit()
@@ -159,7 +156,6 @@ def handle_remove_chat(data):
         print(e)
         return jsonify({"msg": "Failed to delete chat"}), 500
 
-    # Emit a message to all connected clients with the updated shopping chat
     emit('updateChats', {"chatIds": chat_ids, "currentUser": user_id}, broadcast=True)
 
 @socketio.on('create_chat')
@@ -221,7 +217,6 @@ def handle_get_shared_chats():
         shared_chat_ids = cur.fetchall()
         chat_ids = [row[0] for row in shared_chat_ids]
 
-        # Fetch the shopping chats based on the chat IDs from the shopping_chats table
         cur.execute("SELECT * FROM private_chats WHERE chat_id = ANY (%s)", (chat_ids,))
         private_chats = cur.fetchall()
 
@@ -236,7 +231,6 @@ def handle_get_shared_chats():
 @socketio.on('get_chat_ids')
 @jwt_required()
 def get_chat_ids():
-    # Return the shopping chat as a JSON array
     user_id = get_jwt_identity()
 
     try:
@@ -258,7 +252,6 @@ def get_chat_ids():
 @socketio.on('get_chat_from_ids')
 @jwt_required()
 def get_chat_from_ids(data):
-    # Return the shopping chat as a JSON array
     user_id = get_jwt_identity()
     chat_ids = data['chat_data']['chatIds']
 
@@ -289,7 +282,6 @@ def handle_get_messages(data):
 
         cur = conn.cursor()
 
-        # Check if the user is allowed to add messages to the shared chat
         cur.execute("SELECT chat_id FROM shared_chats WHERE %s = ANY (user_ids) AND chat_id = %s", (user_id, chat_id))
         result = cur.fetchone()
         if not result:

@@ -1,13 +1,9 @@
 from flask import Flask
-import psycopg2
 from flask_bcrypt import Bcrypt
 from flask_cors import CORS
-from flask_socketio import SocketIO, emit
+from flask_socketio import SocketIO
 from flask_jwt_extended import JWTManager
 from components.init import init
-from werkzeug.utils import secure_filename
-from werkzeug.datastructures import FileStorage
-import os
 
 app = Flask(__name__, static_folder='../backend/profiles')
 app.config['JWT_SECRET_KEY'] = 'super-secret'

@@ -12,6 +12,7 @@ import {
   Switch,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { StatusBar } from "expo-status-bar";
 
 const RewardsBody = ({ socket, token }) => {
     const navigation = useNavigation();
@@ -123,6 +124,7 @@ const RewardsBody = ({ socket, token }) => {
 
   return (
     <View style={styles.container}>
+      <StatusBar style="light" />
       <View style={styles.header}>
         <TouchableOpacity onPress={handleGoBack}>
           <Text style={styles.backButton}>Back</Text>

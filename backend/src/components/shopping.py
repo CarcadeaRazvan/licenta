@@ -1,8 +1,7 @@
 from flask import Blueprint, request, jsonify
 import psycopg2
 from flask_socketio import emit
-from flask_jwt_extended.exceptions import JWTExtendedException
-from flask_jwt_extended import JWTManager, jwt_required, get_jwt_identity
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from app import socketio
 from components.utils import establish_connection
 
@@ -11,7 +10,6 @@ shopping_bp = Blueprint('shopping', __name__)
 @socketio.on('get_list_ids')
 @jwt_required()
 def get_list_ids():
-    # Return the shopping list as a JSON array
     user_id = get_jwt_identity()
 
     try:
@@ -33,7 +31,6 @@ def get_list_ids():
 @socketio.on('get_list_from_ids')
 @jwt_required()
 def get_list_from_ids(data):
-    # Return the shopping list as a JSON array
     user_id = get_jwt_identity()
     list_ids = data['list_data']['listIds']
 
@@ -63,12 +60,10 @@ def handle_get_shared_lists():
 
         cur = conn.cursor()
 
-        # Fetch the shared lists for the user from the shared_lists table
         cur.execute("SELECT list_id FROM shared_lists WHERE %s = ANY (user_ids)", (user_id,))
         shared_list_ids = cur.fetchall()
         list_ids = [row[0] for row in shared_list_ids]
 
-        # Fetch the shopping lists based on the list IDs from the shopping_lists table
         cur.execute("SELECT * FROM shopping_lists WHERE list_id = ANY (%s)", (list_ids,))
         shopping_lists = cur.fetchall()
 
@@ -91,7 +86,6 @@ def handle_get_items(data):
 
         cur = conn.cursor()
 
-        # Check if the user is allowed to add items to the shared list
         cur.execute("SELECT list_id FROM shared_lists WHERE %s = ANY (user_ids) AND list_id = %s", (user_id, list_id))
         result = cur.fetchone()
         if not result:
@@ -124,7 +118,6 @@ def handle_add_item(data):
 
         cur = conn.cursor()
 
-        # Check if the user is allowed to add items to the shared list
         cur.execute("SELECT list_id FROM shared_lists WHERE %s = ANY (user_ids) AND list_id = %s", (user_id, list_id))
         result = cur.fetchone()
         if not result:
@@ -184,7 +177,6 @@ def handle_remove_item(data):
         print(e)
         return jsonify({"msg": "Failed to get remove items"}), 500
 
-    # Emit a message to all connected clients with the updated shopping list
     emit('updateList', {"listIds": list_ids, "shoppingList": shopping_list, "currentUser": user_id}, broadcast=True)
 
 @socketio.on('remove_list')
@@ -227,7 +219,6 @@ def handle_remove_list(data):
         print(e)
         return jsonify({"msg": "Failed to delete list"}), 500
 
-    # Emit a message to all connected clients with the updated shopping list
     emit('updateLists', {"listIds": list_ids, "currentUser": user_id}, broadcast=True)
 
 @socketio.on('create_list')
@@ -253,12 +244,10 @@ def handle_create_list(data):
                     VALUES (%s, %s) RETURNING *
                 """, (username, notification))
 
-        # Insert the list into the shopping_lists table
         cur.execute("INSERT INTO shopping_lists (list_name, items) VALUES (%s, %s) RETURNING list_id",
                     (list_name, items))
         list_id = cur.fetchone()[0]
 
-        # Insert the list ID and user IDs into the shared_lists table
         cur.execute("INSERT INTO shared_lists (list_id, user_ids) VALUES (%s, %s)", (list_id, usernames))
         conn.commit()
 
@@ -266,7 +255,6 @@ def handle_create_list(data):
         shared_list_ids = cur.fetchall()
         list_ids = [row[0] for row in shared_list_ids]
 
-        # Fetch the shopping lists based on the list IDs from the shopping_lists table
         cur.execute("SELECT * FROM shopping_lists WHERE list_id = ANY (%s)", (list_ids,))
         shopping_lists = cur.fetchall()
 

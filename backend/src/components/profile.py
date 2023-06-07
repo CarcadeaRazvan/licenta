@@ -1,11 +1,10 @@
-from flask import Blueprint, request, jsonify, render_template, request, redirect, url_for, send_from_directory
-from flask_jwt_extended import JWTManager, jwt_required, create_access_token, get_jwt_identity
+from flask import Blueprint, request, jsonify, request, send_from_directory
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from flask_jwt_extended.exceptions import JWTExtendedException
 from app import app
 from werkzeug.utils import secure_filename
 import psycopg2
 import os
-from flask import send_file
 from components.utils import establish_connection
 
 profile_bp = Blueprint('profile', __name__)

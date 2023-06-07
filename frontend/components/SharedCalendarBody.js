@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { useNavigation, withNavigation } from "@react-navigation/native";
 import { Calendar } from "react-native-calendars";
+import { StatusBar } from "expo-status-bar";
 
 const SharedCalendarBody = ({ token, socket }) => {
   const navigation = useNavigation();
@@ -278,6 +279,7 @@ const SharedCalendarBody = ({ token, socket }) => {
 
   return (
     <View style={styles.container}>
+      <StatusBar style="light" />
       <View style={styles.header}>
         <TouchableOpacity onPress={handleGoBack}>
           <Text style={styles.backButton}>Back</Text>

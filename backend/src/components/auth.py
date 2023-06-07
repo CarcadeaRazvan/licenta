@@ -3,7 +3,6 @@ import psycopg2
 from flask_jwt_extended import create_access_token
 from flask_bcrypt import generate_password_hash, check_password_hash
 from datetime import timedelta
-import json
 from components.utils import establish_connection
 
 auth_bp = Blueprint('auth', __name__)
@@ -12,17 +11,14 @@ auth_bp = Blueprint('auth', __name__)
 def login():
     conn = establish_connection()
 
-    # execute a SELECT query on the "users" table
     cur = conn.cursor()
     cur.execute("SELECT username, password FROM users;")
 
-    # fetch the data and store it in a dictionary
     users = {}
     for row in cur.fetchall():
         username, password_hash = row
         users[username] = password_hash
 
-    # close the cursor and connection
     cur.close()
     conn.close()
 
@@ -39,7 +35,7 @@ def login():
         return jsonify({"msg": "Invalid username or password"}), 401
 
     access_token = create_access_token(identity=username, expires_delta=timedelta(days=1))
-    print(access_token)
+    
     return jsonify(access_token=access_token), 200
 
 @auth_bp.route('/register', methods=['POST'])
@@ -64,5 +60,4 @@ def register():
         print(e)
         return jsonify({"msg": "Failed to register user"}), 500
 
-    # Return a success message
     return jsonify({"msg": "User registered successfully"}), 201

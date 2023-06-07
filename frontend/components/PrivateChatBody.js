@@ -14,6 +14,8 @@ import {
   Image,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { StatusBar } from "expo-status-bar";
+import { LinearGradient } from 'expo-linear-gradient';
 
 const PrivateChatBody = ({ socket, token, chatId }) => {
   const navigation = useNavigation();
@@ -67,7 +69,14 @@ const PrivateChatBody = ({ socket, token, chatId }) => {
 
     socket.on("updateChat", (data) => {
       if (chatId == data.privateChat[0][0]) {
-        setMessages(data.privateChat[0][2]);
+        const processedMessages = data.privateChat[0][2].map((message) => {
+          return {
+            ...message,
+            isCurrentUser: message.username === userDataRef.current,
+          };
+        });
+
+        setMessages(processedMessages);
       }
     });
   }, []);
@@ -199,36 +208,55 @@ const PrivateChatBody = ({ socket, token, chatId }) => {
 
   return (
     <View style={styles.individualContainer}>
-      <View style={styles.individualHeader}>
-        <TouchableOpacity onPress={handleGoBack}>
-          <Text style={styles.individualBackButton}>Back</Text>
-        </TouchableOpacity>
-        <View>
-          <Text style={styles.headerText}> {chatName} </Text>
+      <StatusBar style="light" />
+      <LinearGradient
+        colors={['#000000', '#333338']}
+        style={styles.linearGradient}
+      >
+        <View style={styles.individualHeader}>
+          <TouchableOpacity onPress={handleGoBack}>
+            <Text style={styles.individualBackButton}>Back</Text>
+          </TouchableOpacity>
+          <View>
+            <Text style={styles.headerText}> {chatName} </Text>
+          </View>
         </View>
-      </View>
-
+      </LinearGradient>
       <FlatList
         style={styles.messageList}
         data={messages}
         renderItem={({ item }) => (
           <View
             key={`${item.content}-${item.timestamp}`}
-            style={styles.messageContainer}
+            style={[
+              styles.messageContainer,
+              item.isCurrentUser ? styles.currentUserMessageContainer : styles.otherUserMessageContainer,
+            ]}
           >
-            {item.profilePhoto && (
-              <Image
-                source={{
-                  uri: `http://192.168.1.137:5000/profile/image/${item.profilePhoto}`,
-                }}
-                style={styles.profilePhoto}
-                resizeMode="contain"
-              />
-            )}
             <View style={styles.messageContent}>
-              <Text style={styles.username}>{item.username}</Text>
-              <Text style={styles.messageText}>{item.content}</Text>
-              <Text style={styles.timestamp}>{item.timestamp}</Text>
+              {!item.isCurrentUser && item.profilePhoto && (
+                <Image
+                  source={{
+                    uri: `http://192.168.1.137:5000/profile/image/${item.profilePhoto}`,
+                  }}
+                  style={styles.profilePhoto}
+                  resizeMode="contain"
+                />
+              )}
+              <View style={styles.messageTextContainer}>
+                <Text style={styles.username}>{item.username}</Text>
+                <Text style={styles.messageText}>{item.content}</Text>
+                <Text style={styles.timestamp}>{item.timestamp}</Text>
+              </View>
+              {item.isCurrentUser && item.profilePhoto && (
+                <Image
+                  source={{
+                    uri: `http://192.168.1.137:5000/profile/image/${item.profilePhoto}`,
+                  }}
+                  style={styles.profilePhoto}
+                  resizeMode="contain"
+                />
+              )}
             </View>
           </View>
         )}
@@ -247,7 +275,7 @@ const PrivateChatBody = ({ socket, token, chatId }) => {
                 style={styles.userItem}
                 onPress={() => handleUserSelection(item.username)}
               >
-                <Text>{item.username}</Text>
+                <Text style={styles.username}>{item.username}</Text>
               </TouchableOpacity>
             )}
             contentContainerStyle={styles.userList}
@@ -256,9 +284,8 @@ const PrivateChatBody = ({ socket, token, chatId }) => {
       )}
 
       <KeyboardAvoidingView
-        style={styles.container}
         behavior="padding"
-        keyboardVerticalOffset={Platform.OS === "ios" ? 64 : -210}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 44 : -256}
       >
         <View style={[styles.inputContainer]}>
           <TextInput
@@ -266,9 +293,13 @@ const PrivateChatBody = ({ socket, token, chatId }) => {
             style={styles.input}
             value={message}
             onChangeText={handleInputChange}
+            placeholderTextColor="#ccc"
             placeholder="Type a message..."
+            keyboardAppearance="dark"
           />
-          <Button title="Send" onPress={handleMessageSend} />
+          <TouchableOpacity onPress={handleMessageSend}>
+            <Text style={styles.individualSendButton}>Send</Text>
+          </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
     </View>
@@ -284,13 +315,17 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginVertical: 5,
   },
+  linearGradient: {
+    height: 100,
+    width: 400,
+  },
   headerText: {
-    // flex: 1,
+    color: "#ccc",
     textAlign: "center",
     fontWeight: "bold",
-    fontSize: 20,
-    // marginTop: 50,
-    marginRight: 120,
+    fontSize: 25,
+    marginTop: 30,
+    marginLeft: 100,
   },
   messageContent: {
     flex: 1,
@@ -303,32 +338,28 @@ const styles = StyleSheet.create({
   },
   username: {
     fontWeight: "bold",
-    marginBottom: 5,
+    fontSize: 18,
   },
   messageText: {
-    fontSize: 16,
+    fontSize: 15,
   },
   individualContainer: {
     flex: 1,
-    backgroundColor: "white",
-    padding: 20,
+    marginTop: -20,
+    marginLeft: -20,
+    marginRight: -20,
+    marginBottom: 40,
+    backgroundColor: "#333338",
   },
   individualHeader: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 20,
-  },
-  individualFooter: {
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginTop: 600,
   },
   individualBackButton: {
+    color: "#ccc",
+    marginLeft: 20,
+    marginTop: 55,
     fontSize: 18,
-    fontWeight: "bold",
-    color: "blue",
   },
   chatItemText: {
     fontSize: 16,
@@ -344,18 +375,26 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 10,
+    paddingLeft: 20,
     paddingVertical: 2,
-    backgroundColor: "lightgray",
+    backgroundColor: "#333338",
   },
   input: {
     flex: 1,
     marginRight: 10,
+    marginBottom: 40,
     height: 40,
     borderWidth: 1,
     borderColor: "gray",
+    color: "#ccc",
     borderRadius: 5,
     paddingLeft: 10,
+  },
+  individualSendButton: {
+    color: "#ccc",
+    marginRight: 20,
+    marginBottom: 40,
+    fontSize: 20,
   },
   messageList: {
     flex: 1,
@@ -366,9 +405,6 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     marginRight: 10,
   },
-  // userList: {
-  //   marginTop: 10,
-  // },
   userItem: {
     paddingVertical: 10,
     borderBottomWidth: 1,
@@ -381,10 +417,35 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 30,
     left: 25,
-    backgroundColor: '#fff',
+    backgroundColor: '#9d9ea7',
     borderRadius: 10,
     elevation: 5,
     zIndex: 999,
+  },
+  currentUserMessageContainer: {
+    marginLeft: 80,
+    marginRight: 10,
+    backgroundColor: "#6b78fa"
+  },
+  otherUserMessageContainer: {
+    marginLeft: 10,
+    marginRight: 80,
+    backgroundColor: "#9d9ea7"
+  },
+  messageContent: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    borderRadius: 10,
+  },
+  messageTextContainer: {
+    flex: 1,
+    marginLeft: 5,
+  },
+  timestamp: {
+    color: "black",
+    fontSize: 12,
+    alignSelf: "flex-end",
+    marginRight: 5,
   },
 });
 
