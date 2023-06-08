@@ -284,18 +284,18 @@ const styles = StyleSheet.create({
     fontSize: 20,
   },
   chatContainer: {
-    paddingTop: 10,
-    paddingHorizontal: 10,
+    // paddingTop: 10,
+    paddingHorizontal: 15,
   },
   chatItem: {
-    backgroundColor: "#66666b",
+    backgroundColor: "#272829",
     borderRadius: 10,
     padding: 20,
     marginBottom: 10,
   },
   chatItemText: {
     fontSize: 18,
-    color: "#111214",
+    color: "#ccc",
     fontWeight: "bold",
   },
   modalContainer: {

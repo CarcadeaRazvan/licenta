@@ -8,9 +8,11 @@ import {
   TextInput,
   Button,
   Alert,
+  FlatList
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { StatusBar } from "expo-status-bar";
+import { LinearGradient } from 'expo-linear-gradient';
 
 const ShoppingListBody = ({ socket, token, listId }) => {
   const navigation = useNavigation();
@@ -112,6 +114,7 @@ const ShoppingListBody = ({ socket, token, listId }) => {
     socket.emit("add_item_to_list", { data });
 
     setModalVisible(false);
+    setItemName("");
   };
 
   const handleRemoveItem = async (index) => {
@@ -158,56 +161,75 @@ const ShoppingListBody = ({ socket, token, listId }) => {
   return (
     <View style={styles.individualContainer}>
       <StatusBar style="light" />
-      <View style={styles.individualHeader}>
-        <TouchableOpacity onPress={handleGoBack}>
-          <Text style={styles.individualBackButton}>Back</Text>
-        </TouchableOpacity>
-        <View>
-        <Text style={styles.headerText}> {listName} </Text>
+      <LinearGradient
+        colors={['#000000', '#333338']}
+        style={styles.linearGradient}
+      >
+        <View style={styles.individualHeader}>
+          <TouchableOpacity onPress={handleGoBack}>
+            <Text style={styles.individualBackButton}>Back</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerText}> {listName} </Text>
+          <TouchableOpacity onPress={() => setModalVisible(true)}>
+            <Text style={styles.individualAddButton}>+</Text>
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity onPress={() => setModalVisible(true)}>
-          <Text style={styles.individualAddButton}>+</Text>
-        </TouchableOpacity>
-      </View>
+      </LinearGradient>
 
-      <View>
-        <View>
-          {itemList.map((item) =>
-            item[2]
-              .map((subItem, index) => ({
-                id: index,
-                name: subItem,
-              }))
-              .map((transformedItem) => (
-                <TouchableOpacity
-                  key={transformedItem.id}
-                  onPress={() => handleRemoveItem(transformedItem.id)}
-                >
-                  <View>
-                    <Text>{transformedItem.name}</Text>
-                  </View>
-                </TouchableOpacity>
-              ))
+      <View style={styles.content}>
+        <FlatList
+          style={styles.listContainer}
+          data={itemList.flatMap((item) =>
+            item[2].map((subItem, index) => ({
+              id: index,
+              name: subItem,
+            }))
           )}
-        </View>
-      </View>
+          renderItem={({ item }) => (
+            <TouchableOpacity onPress={() => handleRemoveItem(item.id)}>
+              <View>
+                <Text style={styles.listItemText}>{item.name}</Text>
+              </View>
+            </TouchableOpacity>
+          )}
+          keyExtractor={(item) => item.id}
+        />
+      
 
-      <View style={styles.individualFooter}>
-        <TouchableOpacity onPress={handleRemoveList}>
-          <Text style={styles.individualDeleteButton}>Delete list</Text>
-        </TouchableOpacity>
+        <View style={styles.individualFooter}>
+          <TouchableOpacity onPress={handleRemoveList}>
+            <Text style={styles.individualDeleteButton}>Delete list</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <Modal visible={modalVisible} animationType="slide" transparent={true}>
         <View style={styles.modalContainer}>
-          <TextInput
-            value={itemName}
-            placeholder="Enter item name"
-            onChangeText={(text) => setItemName(text)}
-          />
-
-          <Button title="Add" onPress={handleAddItem} />
-          <Button title="Cancel" onPress={() => setModalVisible(false)} />
+          <View style={styles.modalContent}>
+            <TextInput
+              value={itemName}
+              style={styles.input}
+              placeholderTextColor="#ccc"
+              keyboardAppearance="dark"
+              placeholder="Enter item name"
+              onChangeText={(text) => setItemName(text)}
+            />
+            <TouchableOpacity
+                style={styles.addButton}
+                onPress={handleAddItem}
+              >
+                <Text style={styles.addButtonText}>Add item</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => {
+                  setItemName("");
+                  setModalVisible(false);
+                }}
+              >
+                <Text style={styles.closeButtonText}>Close</Text>
+              </TouchableOpacity>
+          </View>
         </View>
       </Modal>
     </View>
@@ -217,49 +239,93 @@ const ShoppingListBody = ({ socket, token, listId }) => {
 const styles = StyleSheet.create({
   individualContainer: {
     flex: 1,
-    backgroundColor: "white",
-    padding: 20,
+  },
+  linearGradient: {
+    height: 100,
+    width: 400,
   },
   headerText: {
-    // flex: 1,
+    flex: 1,
+    color: "#ccc",
     textAlign: "center",
     fontWeight: "bold",
-    fontSize: 20,
-    // marginTop: 50,
-    // marginRight: 120,
+    fontSize: 25,
+    marginTop: 30,
+    marginLeft: -20,
   },
   individualHeader: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 20,
   },
   individualFooter: {
-    flexDirection: "column",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginTop: 600,
+    paddingHorizontal: 20,
+    paddingBottom: 30,
+    borderTopWidth: 1,
+    borderTopColor: '#333338',
+  },
+  listContainer: {
+    paddingHorizontal: 20,
   },
   individualBackButton: {
+    color: "#ccc",
+    marginLeft: 20,
+    marginTop: 55,
+    fontSize: 18,
+  },
+  addButton: {
+    // backgroundColor: "#007AFF",
+    padding: 8,
+    borderRadius: 4,
+    marginTop: 16,
+    alignItems: "center",
+    marginBottom: 20,
+    padding: 6,
+    marginLeft: 50,
+    marginRight: 50,
+    borderWidth: 1,
+    borderColor: "gray",
+  },
+  addButtonText: {
+    color: "#ccc",
     fontSize: 18,
     fontWeight: "bold",
-    color: "blue",
+  },
+  closeButton: {
+    alignItems: "center",
+    marginTop: 8,
+  },
+  closeButtonText: {
+    color: "#ccc",
+    fontSize: 16,
   },
   individualAddButton: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "blue",
+    color: "#ccc",
+    marginRight: 30,
+    marginTop: 55,
+    fontSize: 18,
+  },
+  input: {
+    fontSize: 17,
+    color: "#ffffff",
+    paddingLeft: 5,
+    paddingRight: 5,
+    marginBottom: 5,
+    borderWidth: 1,
+    borderColor: "grey",
+    height: 30,
+    borderRadius: 15,
   },
   individualDeleteButton: {
-    fontSize: 30,
-    alignItems: "center",
+    fontSize: 22,
+    // alignItems: "center",
     fontWeight: "bold",
-    color: "blue",
+    color: "#ccc",
+    marginLeft: 125,
   },
   listItemText: {
-    fontSize: 16,
+    fontSize: 18,
+    color: "#ccc",
     fontWeight: "bold",
-    color: "black",
   },
   listItemSubText: {
     fontSize: 14,
@@ -267,9 +333,18 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     flex: 1,
-    marginTop: 50,
-    padding: 20,
-    backgroundColor: "white",
+    justifyContent: "center",
+  },
+  content: {
+    flex: 1,
+    backgroundColor: "#333338",
+  },
+  modalContent: {
+    backgroundColor: "#202022",
+    borderRadius: 8,
+    padding: 16,
+    marginHorizontal: 16,
+    marginBottom: 1,
   },
 });
 

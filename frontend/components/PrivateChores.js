@@ -12,6 +12,8 @@ import {
   Switch,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { StatusBar } from "expo-status-bar";
+import { LinearGradient } from 'expo-linear-gradient';
 
 const PrivateChores = ({ route }) => {
   const navigation = useNavigation();
@@ -125,32 +127,40 @@ const PrivateChores = ({ route }) => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={handleGoBack}>
-          <Text style={styles.backButton}>Back</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerText}>My Chores</Text>
-      </View>
-
-      <FlatList
-        data={chores.map((chore) => ({
-          id: chore[0],
-          name: chore[1],
-          description: chore[2],
-          reward: chore[3],
-        }))}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
-          <TouchableOpacity onPress={() => handleCompleteChore(item.id)}>
-            <View style={styles.listItem}>
-              <Text style={styles.listItemText}>{item.name}</Text>
-              <Text style={styles.listItemText}>{item.description}</Text>
-              <Text style={styles.listItemText}>{item.reward}</Text>
-            </View>
+      <StatusBar style="light" />
+      <LinearGradient
+        colors={['#000000', '#333338']}
+        style={styles.linearGradient}
+      >
+        <View style={styles.header}>
+          <TouchableOpacity onPress={handleGoBack}>
+            <Text style={styles.backButton}>Back</Text>
           </TouchableOpacity>
-        )}
-        contentContainerStyle={styles.listContainer}
-      />
+          <Text style={styles.headerText}>My chores</Text>
+        </View>
+      </LinearGradient>
+
+      <View style={styles.content}>
+        <FlatList
+          data={chores.map((chore) => ({
+            id: chore[0],
+            name: chore[1],
+            description: chore[2],
+            reward: chore[3],
+          }))}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={({ item }) => (
+            <TouchableOpacity onPress={() => handleCompleteChore(item.id)}>
+              <View style={styles.listItem}>
+                <Text style={styles.choreNameText}>{item.name}</Text>
+                <Text style={styles.choreDescriptionText}>{item.description}</Text>
+                <Text style={styles.choreRewardText}>{item.reward}</Text>
+              </View>
+            </TouchableOpacity>
+          )}
+          contentContainerStyle={styles.listContainer}
+        />
+      </View>
     </View>
   );
 };
@@ -159,41 +169,63 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  linearGradient: {
+    height: 100,
+    width: 400,
+  },
   header: {
-    backgroundColor: "#FFFFFF",
     flexDirection: "row",
     alignItems: "center",
-    height: 80,
   },
   headerText: {
     flex: 1,
+    color: "#ccc",
     textAlign: "center",
     fontWeight: "bold",
     fontSize: 25,
-    marginTop: 50,
-    marginLeft: 30,
+    marginTop: 30,
+    marginLeft: -70,
   },
   backButton: {
-    marginLeft: 30,
-    marginTop: 50,
+    color: "#ccc",
+    marginLeft: 20,
+    marginTop: 55,
     fontSize: 18,
   },
   spacer: {
     width: 60,
   },
   listContainer: {
-    paddingTop: 20,
-    paddingHorizontal: 20,
+    fontSize: 18,
+    color: "#ccc",
+    fontWeight: "bold",
   },
   listItem: {
-    backgroundColor: "#ffffff",
+    backgroundColor: "#272829",
     borderRadius: 10,
-    padding: 20,
+    width: 370,
+    marginLeft: 10,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
     marginBottom: 10,
   },
-  listItemText: {
+  content: {
+    flex: 1,
+    backgroundColor: "#333338",
+  },
+  choreNameText: {
     fontSize: 18,
+    color: "#ccc",
     fontWeight: "bold",
+  },
+  choreRewardText: {
+    fontSize: 18,
+    color: "#ccc",
+    fontWeight: "bold",
+  },
+  choreDescriptionText: {
+    fontSize: 18,
+    color: "#ccc",
   },
 });
 

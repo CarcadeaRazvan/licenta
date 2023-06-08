@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, ScrollView, Alert } from 'react-native';
 import { useNavigation, withNavigation } from '@react-navigation/native';
 import { StatusBar } from "expo-status-bar";
+import { LinearGradient } from 'expo-linear-gradient';
 
 const NotificationsBody = ({ socket, token }) => {
   const navigation = useNavigation();
@@ -71,6 +72,10 @@ const NotificationsBody = ({ socket, token }) => {
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
+      <LinearGradient
+        colors={['#000000', '#333338']}
+        style={styles.linearGradient}
+      >
       <View style={styles.header}>
         <TouchableOpacity onPress={handleGoBack}>
           <Text style={styles.backButton}>Back</Text>
@@ -78,6 +83,7 @@ const NotificationsBody = ({ socket, token }) => {
         <Text style={styles.headerText}>Notifications</Text>
         <View style={styles.spacer} />
       </View>
+      </LinearGradient>
       <View style={styles.content}>
         <FlatList
           data={notifications.map((notification) => ({
@@ -108,28 +114,26 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  linearGradient: {
+    height: 100,
+    width: 400,
+  },
   header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    // paddingHorizontal: 20,
-    // paddingTop: 20,
-    paddingBottom: 10,
-    backgroundColor: '#f2f2f2',
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
+    flexDirection: "row",
+    alignItems: "center",
   },
   headerText: {
     flex: 1,
-    textAlign: 'center',
-    fontWeight: 'bold',
+    color: "#ccc",
+    textAlign: "center",
+    fontWeight: "bold",
     fontSize: 25,
-    marginTop: 50,
-    marginLeft: -15
+    marginTop: 30,
   },
   backButton: {
-    marginLeft: 30,
-    marginTop: 50,
+    color: "#ccc",
+    marginLeft: 20,
+    marginTop: 55,
     fontSize: 18,
   },
   spacer: {
@@ -143,29 +147,32 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   listItem: {
-    backgroundColor: "#ffffff",
+    backgroundColor: "#272829",
     borderRadius: 10,
     padding: 20,
     marginBottom: 10,
   },
   listItemText: {
     fontSize: 18,
+    color: "#ccc",
     fontWeight: "bold",
   },
   individualFooter: {
     paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingBottom: 30,
     borderTopWidth: 1,
-    borderTopColor: '#ccc',
+    borderTopColor: '#333338',
   },
   individualDeleteButton: {
-    fontSize: 30,
-    alignItems: "center",
+    fontSize: 22,
+    // alignItems: "center",
     fontWeight: "bold",
-    color: "blue",
+    color: "#ccc",
+    marginLeft: 85,
   },
   content: {
     flex: 1,
+    backgroundColor: "#333338"
   },
 });
 

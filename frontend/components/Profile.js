@@ -4,6 +4,7 @@ import { useNavigation, withNavigation } from "@react-navigation/native";
 import * as ImagePicker from "expo-image-picker";
 import { Button } from "react-native";
 import { StatusBar } from "expo-status-bar";
+import { LinearGradient } from 'expo-linear-gradient';
 
 const Profile = ({ token }) => {
   const navigation = useNavigation();
@@ -183,16 +184,21 @@ const Profile = ({ token }) => {
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
-      <View style={styles.header}>
-        <TouchableOpacity onPress={handleGoBack}>
-          <Text style={styles.backButton}>Back</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerText}>Profile</Text>
-        <View style={styles.spacer} />
-      </View>
+      <LinearGradient
+        colors={['#000000', '#333338']}
+        style={styles.linearGradient}
+      >
+        <View style={styles.header}>
+          <TouchableOpacity onPress={handleGoBack}>
+            <Text style={styles.backButton}>Back</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerText}>Profile</Text>
+          <View style={styles.spacer} />
+        </View>
+      </LinearGradient>
       <View style={styles.content}>
         {userData ? (
-          <Text>{`Logged in as ${userDataRef.current}`}</Text>
+          <Text style={styles.greet}>{`Glad to see you, ${userDataRef.current}!`}</Text>
         ) : (
           <Text>Loading...</Text>
         )}
@@ -201,12 +207,16 @@ const Profile = ({ token }) => {
             source={{
               uri: `http://192.168.1.137:5000/profile/image/${profilePhoto}?${refreshKey}`,
             }}
-            style={{ width: 200, height: 200 }}
+            style={styles.profilePhoto}
             resizeMode="contain"
           />
         )}
-        <Button title="Select Profile Photo" onPress={pickImage} />
-        <Text style={styles.rewardsHeaderText}>My rewards</Text>
+        <TouchableOpacity onPress={pickImage}>
+          <Text style={styles.selectButton}>Select Profile Photo</Text>
+        </TouchableOpacity>
+        <Text style={styles.rewardsHeaderText}>My rewards (points: {points})</Text>
+      </View>
+      <View style={styles.rewardsContainer}>
         {rewards.length > 0 ? (
           <FlatList
             data={rewards}
@@ -220,12 +230,8 @@ const Profile = ({ token }) => {
             )}
           />
         ) : (
-          <Text>You have no rewards yet</Text>
+          <Text style={styles.noReward}>You have no rewards yet</Text>
         )}
-        <View>
-          <Text>Current balance: {points}</Text>
-        </View>
-
       </View>
     </View>
   );
@@ -234,31 +240,48 @@ const Profile = ({ token }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: "#333338",
+  },
+  linearGradient: {
+    height: 100,
+    width: 400,
   },
   header: {
-    backgroundColor: "#FFFFFF",
     flexDirection: "row",
     alignItems: "center",
-    height: 80,
   },
   headerText: {
     flex: 1,
+    color: "#ccc",
     textAlign: "center",
     fontWeight: "bold",
     fontSize: 25,
-    marginTop: 50,
-    marginLeft: -15,
+    marginTop: 30,
+    // marginLeft: 25,
+  },
+  profilePhoto: {
+    width: 220,
+    height: 220,
+    borderRadius: 90,
+    marginBottom: 20,
+  },
+  greet: {
+    fontSize: 20,
+    marginTop: 20,
+    marginBottom: 30,
+    color: "#f4f5fd",
   },
   backButton: {
-    marginLeft: 30,
-    marginTop: 50,
+    color: "#ccc",
+    marginLeft: 20,
+    marginTop: 55,
     fontSize: 18,
   },
   spacer: {
     width: 60,
   },
   content: {
-    flex: 1,
+    // flex: 1,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -268,23 +291,47 @@ const styles = StyleSheet.create({
   rewardsHeaderText: {
     fontSize: 20,
     fontWeight: 'bold',
+    color: "#e9e9ea",
+    marginTop: 10,
     marginBottom: 10,
   },
   rewardListContainer: {
     paddingHorizontal: 10,
   },
   rewardItem: {
-    backgroundColor: 'lightgray',
+    backgroundColor: '#272829',
     padding: 10,
     marginBottom: 10,
+    width: 370,
     borderRadius: 5,
   },
   rewardName: {
     fontSize: 18,
     fontWeight: 'bold',
+    color: "#e9e9ea",
   },
   rewardDescription: {
     fontSize: 16,
+    color: "#e9e9ea",
+  },
+  noReward: {
+    fontSize: 16,
+    color: "#e9e9ea",
+  },
+  selectButton: {
+    color: "#ffffff",
+    marginBottom: 10,
+    fontSize: 18,
+    borderWidth: 1,
+    borderColor: "gray",
+    borderRadius: 5,
+    paddingLeft: 5,
+    paddingRight: 5,
+  },
+  rewardsContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });
 

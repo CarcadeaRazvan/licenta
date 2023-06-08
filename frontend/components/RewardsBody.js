@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { StatusBar } from "expo-status-bar";
+import { LinearGradient } from 'expo-linear-gradient';
 
 const RewardsBody = ({ socket, token }) => {
     const navigation = useNavigation();
@@ -65,6 +66,9 @@ const RewardsBody = ({ socket, token }) => {
     socket.emit("create_reward", { data });
 
     setModalVisible(false);
+    setRewardName("");
+    setRewardDescription("");
+    setRewardPrice(0);
   };
 
   useEffect(() => {
@@ -125,67 +129,97 @@ const RewardsBody = ({ socket, token }) => {
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
-      <View style={styles.header}>
-        <TouchableOpacity onPress={handleGoBack}>
-          <Text style={styles.backButton}>Back</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerText}>Rewards</Text>
-        <View style={styles.spacer} />
-        <TouchableOpacity onPress={() => setModalVisible(true)}>
-          <Text style={styles.addButton}>+</Text>
-        </TouchableOpacity>
-      </View>
+      <LinearGradient
+        colors={['#000000', '#333338']}
+        style={styles.linearGradient}
+      >
+        <View style={styles.header}>
+          <TouchableOpacity onPress={handleGoBack}>
+            <Text style={styles.backButton}>Back</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerText}>Rewards</Text>
+          <View style={styles.spacer} />
+          <TouchableOpacity onPress={() => setModalVisible(true)}>
+            <Text style={styles.addReward}>+</Text>
+          </TouchableOpacity>
+        </View>
+      </LinearGradient>
 
-      {rewards.length > 0 ? (
-        <FlatList
-          data={rewards.map((reward) => ({
-            id: reward[0],
-            name: reward[1],
-            description: reward[2],
-            price: reward[3],
-          }))}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={({ item }) => (
-            <TouchableOpacity onPress={() => handleClaimReward(item.id)}>
-              <View style={styles.listItem}>
-                <Text style={styles.listItemText}>{item.name}</Text>
-                <Text style={styles.listItemText}>{item.description}</Text>
-                <Text style={styles.listItemText}>{item.price}</Text>
-              </View>
-            </TouchableOpacity>
-          )}
-          contentContainerStyle={styles.listContainer}
-        />
-      ) : (
-        <Text>There are no available rewards yet</Text>
-      )}
+      <View style={styles.content}>
+        {rewards.length > 0 ? (
+          <FlatList
+            data={rewards.map((reward) => ({
+              id: reward[0],
+              name: reward[1],
+              description: reward[2],
+              price: reward[3],
+            }))}
+            keyExtractor={(item) => item.id.toString()}
+            renderItem={({ item }) => (
+              <TouchableOpacity onPress={() => handleClaimReward(item.id)}>
+                <View style={styles.listItem}>
+                  <Text style={styles.rewardNameText}>{item.name}</Text>
+                  <Text style={styles.rewardDescriptionText}>{item.description}</Text>
+                  <Text style={styles.rewardPriceText}>{item.price}</Text>
+                </View>
+              </TouchableOpacity>
+            )}
+            contentContainerStyle={styles.listContainer}
+          />
+        ) : (
+          <Text>There are no available rewards yet</Text>
+        )}
+      </View>
 
       <Modal visible={modalVisible} animationType="slide" transparent={true}>
         <View style={styles.modalContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter reward name"
-            value={rewardName}
-            onChangeText={(text) => setRewardName(text)}
-          />
+          <View style={styles.modalContent}>
+            <TextInput
+              style={styles.input}
+              placeholderTextColor="#ccc"
+              keyboardAppearance="dark"
+              placeholder="Enter reward name"
+              value={rewardName}
+              onChangeText={(text) => setRewardName(text)}
+            />
 
-          <TextInput
-            style={styles.input}
-            placeholder="Enter reward description"
-            value={rewardDescription}
-            onChangeText={(text) => setRewardDescription(text)}
-          />
+            <TextInput
+              style={styles.input}
+              placeholderTextColor="#ccc"
+              keyboardAppearance="dark"
+              placeholder="Enter reward description"
+              value={rewardDescription}
+              onChangeText={(text) => setRewardDescription(text)}
+            />
 
-          <TextInput
-            style={styles.input}
-            placeholder="Enter reward price"
-            value={rewardPrice.toString()}
-            onChangeText={(text) => setRewardPrice(text)}
-            keyboardType="numeric"
-          />
+            <TextInput
+              style={styles.input}
+              placeholderTextColor="#ccc"
+              keyboardAppearance="dark"
+              placeholder="Enter reward price"
+              value={rewardPrice.toString()}
+              onChangeText={(text) => setRewardPrice(text)}
+              keyboardType="numeric"
+            />
 
-          <Button title="Create Reward" onPress={handleCreateReward} />
-          <Button title="Cancel" onPress={() => setModalVisible(false)} />
+            <TouchableOpacity
+                  style={styles.addButton}
+                  onPress={handleCreateReward}
+                >
+                  <Text style={styles.addButtonText}>Create Reward</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.closeButton}
+                  onPress={() => {
+                    setRewardName("");
+                    setRewardDescription("");
+                    setRewardPrice(0);
+                    setModalVisible(false);
+                  }}
+                >
+                  <Text style={styles.closeButtonText}>Cancel</Text>
+                </TouchableOpacity>
+          </View>
         </View>
       </Modal>
     </View>
@@ -196,74 +230,114 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  content: {
+    flex: 1,
+    backgroundColor: "#333338",
+  },
+  linearGradient: {
+    height: 100,
+    width: 400,
+  },
   header: {
-    backgroundColor: "#FFFFFF",
     flexDirection: "row",
     alignItems: "center",
-    height: 80,
   },
   headerText: {
     flex: 1,
+    color: "#ccc",
     textAlign: "center",
     fontWeight: "bold",
     fontSize: 25,
-    marginTop: 50,
-    marginLeft: 30,
+    marginTop: 30,
+    marginLeft: -20,
   },
   backButton: {
-    marginLeft: 30,
-    marginTop: 50,
-    fontSize: 18,
-  },
-  spacer: {
-    width: 60,
-  },
-  addButton: {
-    fontSize: 18,
+    color: "#ccc",
+    marginLeft: 20,
     marginTop: 55,
-    marginRight: 15,
+    fontSize: 18,
+  },
+  addReward: {
+    color: "#ccc",
+    marginRight: 30,
+    marginTop: 55,
+    fontSize: 18,
   },
   listContainer: {
-    paddingTop: 20,
-    paddingHorizontal: 20,
+    fontSize: 18,
+    color: "#ccc",
+    fontWeight: "bold",
   },
   listItem: {
-    backgroundColor: "#ffffff",
+    backgroundColor: "#272829",
     borderRadius: 10,
-    padding: 20,
+    width: 370,
+    marginLeft: 10,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
     marginBottom: 10,
-  },
-  listItemText: {
-    fontSize: 18,
-    fontWeight: "bold",
   },
   modalContainer: {
     flex: 1,
-    marginTop: 60,
-    padding: 20,
-    backgroundColor: "white",
+    justifyContent: "center",
   },
-  privateChoresButton: {
-    position: "absolute",
-    bottom: 16,
-    right: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+  modalContent: {
+    backgroundColor: "#171718",
     borderRadius: 8,
-    backgroundColor: "blue",
+    padding: 16,
+    marginHorizontal: 10,
+    marginBottom: 1,
   },
-  rewardsButton: {
-    position: "absolute",
-    bottom: 16,
-    left: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
-    backgroundColor: "blue",
-  },
-  privateChoresButtonText: {
-    color: "white",
+  rewardNameText: {
+    fontSize: 18,
+    color: "#ccc",
     fontWeight: "bold",
+  },
+  rewardPriceText: {
+    fontSize: 18,
+    color: "#ccc",
+    fontWeight: "bold",
+  },
+  rewardDescriptionText: {
+    fontSize: 18,
+    color: "#ccc",
+  },
+  input: {
+    fontSize: 17,
+    color: "#ffffff",
+    paddingLeft: 5,
+    paddingRight: 5,
+    marginBottom: 5,
+    borderWidth: 1,
+    borderColor: "grey",
+    height: 30,
+    borderRadius: 15,
+  },
+  addButton: {
+    // backgroundColor: "#007AFF",
+    padding: 8,
+    borderRadius: 4,
+    marginTop: 16,
+    alignItems: "center",
+    marginBottom: 20,
+    padding: 6,
+    marginLeft: 50,
+    marginRight: 50,
+    borderWidth: 1,
+    borderColor: "gray",
+  },
+  addButtonText: {
+    color: "#ccc",
+    fontSize: 18,
+    fontWeight: "bold",
+  },
+  closeButton: {
+    alignItems: "center",
+    marginTop: 8,
+  },
+  closeButtonText: {
+    color: "#ccc",
+    fontSize: 16,
   },
 });
 

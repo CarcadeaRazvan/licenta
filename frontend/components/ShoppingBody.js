@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { StatusBar } from "expo-status-bar";
+import { LinearGradient } from 'expo-linear-gradient';
 
 const ShoppingBody = ({ socket, token }) => {
   const navigation = useNavigation();
@@ -135,6 +136,7 @@ const ShoppingBody = ({ socket, token }) => {
     socket.emit("create_list", { data });
 
     setModalVisible(false);
+    setListName("");
   };
 
   const isSelected = (user) => {
@@ -158,43 +160,54 @@ const ShoppingBody = ({ socket, token }) => {
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
-      <View style={styles.header}>
-        <TouchableOpacity onPress={handleGoBack}>
-          <Text style={styles.backButton}>Back</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerText}>Shopping</Text>
-        <View style={styles.spacer} />
-        <TouchableOpacity onPress={handleListCreate}>
-          <Text style={styles.addButton}>+</Text>
-        </TouchableOpacity>
-      </View>
-
-      <FlatList
-        data={shoppingLists.map((list) => ({
-          id: list[0],
-          name: list[1],
-        }))}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            style={styles.listItem}
-            onPress={() =>
-              navigation.navigate("ShoppingList", {
-                listId: item.id,
-                token: token,
-              })
-            }
-          >
-            <Text style={styles.listItemText}>{item.name}</Text>
+      <LinearGradient
+        colors={['#000000', '#333338']}
+        style={styles.linearGradient}
+      >
+        <View style={styles.header}>
+          <TouchableOpacity onPress={handleGoBack}>
+            <Text style={styles.backButton}>Back</Text>
           </TouchableOpacity>
-        )}
-        contentContainerStyle={styles.listContainer}
-      />
+          <Text style={styles.headerText}>Shopping</Text>
+          <View style={styles.spacer} />
+          <TouchableOpacity onPress={handleListCreate}>
+            <Text style={styles.addButton}>+</Text>
+          </TouchableOpacity>
+        </View>
+      </LinearGradient>
+
+      <View style={styles.content}>
+        <FlatList
+          style={styles.listContainer}
+          data={shoppingLists.map((list) => ({
+            id: list[0],
+            name: list[1],
+          }))}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={styles.listItem}
+              onPress={() =>
+                navigation.navigate("ShoppingList", {
+                  listId: item.id,
+                  token: token,
+                })
+              }
+            >
+              <Text style={styles.listItemText}>{item.name}</Text>
+            </TouchableOpacity>
+          )}
+          contentContainerStyle={styles.listContainer}
+        />
+      </View>
 
       <Modal visible={modalVisible} animationType="slide" transparent={true}>
         <View style={styles.modalContainer}>
+          <Text style={styles.modalTitle}>Create new list</Text>
           <TextInput
             style={styles.input}
+            placeholderTextColor="#ccc"
+            keyboardAppearance="dark"
             placeholder="Enter list name"
             value={listName}
             onChangeText={(text) => setListName(text)}
@@ -207,17 +220,27 @@ const ShoppingBody = ({ socket, token }) => {
             }))}
             renderItem={({ item }) => (
               <View style={styles.userItem}>
-                <Switch
-                  value={isSelected(item)}
-                  onValueChange={() => handleUserSelection(item)}
-                />
-                <Text>{item.username}</Text>
-              </View>
+                      <Text style={styles.username}>{item.username}</Text>
+                      <Switch
+                        value={isSelected(item)}
+                        onValueChange={() => handleUserSelection(item)}
+                      />
+                    </View>
             )}
           />
 
-          <Button title="Create List" onPress={handleCreateList} />
-          <Button title="Cancel" onPress={() => setModalVisible(false)} />
+                <View style={styles.modalButtons}>
+                  <TouchableOpacity style={styles.modalButton} onPress={() => {
+                    setModalVisible(false)
+                    setListName("")
+                    }}>
+                      <Text style={styles.modalCloseText}>Close</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity style={styles.modalButton} onPress={handleCreateList}>
+                    <Text style={styles.modalShareText}>Create List</Text>
+                  </TouchableOpacity>
+                </View>
         </View>
       </Modal>
     </View>
@@ -228,23 +251,33 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  linearGradient: {
+    height: 100,
+    width: 400,
+  },
   header: {
-    backgroundColor: "#FFFFFF",
     flexDirection: "row",
     alignItems: "center",
-    height: 80,
   },
   headerText: {
     flex: 1,
+    color: "#ccc",
     textAlign: "center",
     fontWeight: "bold",
     fontSize: 25,
-    marginTop: 50,
-    marginLeft: 30,
+    marginTop: 30,
+    marginLeft: 35,
   },
   backButton: {
-    marginLeft: 30,
-    marginTop: 50,
+    color: "#ccc",
+    marginLeft: 20,
+    marginTop: 55,
+    fontSize: 18,
+  },
+  addButton: {
+    color: "#ccc",
+    marginRight: 30,
+    marginTop: 55,
     fontSize: 18,
   },
   spacer: {
@@ -254,14 +287,10 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "#333338",
   },
   text: {
     fontSize: 20,
-  },
-  addButton: {
-    marginRight: 30,
-    marginTop: 50,
-    fontSize: 18,
   },
   userItem: {
     flexDirection: "row",
@@ -269,24 +298,85 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   modalContainer: {
-    flex: 1,
-    marginTop: 60,
-    padding: 20,
-    backgroundColor: "white",
+    // marginTop: 50,
+    height: 500,
+    marginTop: "auto",
+    backgroundColor: "#202022",
+    borderRadius: 8,
+    padding: 16,
+    // marginHorizontal: 16,
   },
   listContainer: {
-    paddingTop: 20,
-    paddingHorizontal: 20,
+    fontSize: 18,
+    color: "#ccc",
+    fontWeight: "bold",
+    paddingHorizontal: 7,
   },
   listItem: {
-    backgroundColor: "#ffffff",
+    backgroundColor: "#272829",
     borderRadius: 10,
+    width: 370,
     padding: 20,
     marginBottom: 10,
   },
   listItemText: {
     fontSize: 18,
+    color: "#ccc",
     fontWeight: "bold",
+  },
+  userItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: 10,
+    borderBottomColor: "#ccc",
+  },
+  username: {
+    fontWeight: "bold",
+    fontSize: 16,
+    paddingRight: 50,
+    color: "#ccc"
+  },
+  modalButtons: {
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  modalShareText: {
+    color: "#ccc",
+    fontSize: 20,
+    marginRight: 50,
+    fontWeight: "bold",
+  },
+  modalCloseText: {
+    color: "#ccc",
+    fontSize: 20,
+    marginLeft: 50,
+    // marginBottom: -5,
+  },
+  input: {
+    fontSize: 17,
+    color: "#ffffff",
+    paddingLeft: 5,
+    paddingRight: 5,
+    marginBottom: 5,
+    borderWidth: 1,
+    borderColor: "grey",
+    height: 30,
+    borderRadius: 15,
+  },
+  modalTitle: {
+    marginLeft: 105,
+    fontWeight: "bold",
+    fontSize: 22,
+    paddingRight: 50,
+    color: "#ccc",
+    marginBottom: 25,
+  },
+  modalButton: {
+    alignItems: "center",
+    marginTop: 8,
+    marginBottom: 20,
   },
 });
 

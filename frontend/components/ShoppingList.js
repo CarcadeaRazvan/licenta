@@ -28,8 +28,6 @@ const ShoppingList = ({ route }) => {
 const styles = StyleSheet.create({
   individualContainer: {
     flex: 1,
-    backgroundColor: "white",
-    padding: 20,
   },
 });
 
