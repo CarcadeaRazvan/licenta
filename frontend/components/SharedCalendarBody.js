@@ -8,6 +8,7 @@ import {
   FlatList,
   Switch,
   TextInput,
+  Keyboard,
   ScrollView,
 } from "react-native";
 import { useNavigation, withNavigation } from "@react-navigation/native";
@@ -219,6 +220,7 @@ const SharedCalendarBody = ({ token, socket }) => {
         console.error("Error retrieving availabilities:", error);
       });
     setUserAvailabilities(true);
+    Keyboard.dismiss();
   };
 
   const handleEventPress = async (event) => {
@@ -413,7 +415,8 @@ const SharedCalendarBody = ({ token, socket }) => {
                 placeholderTextColor="#ccc"
                 keyboardAppearance="dark"
                 placeholder="Enter start time"
-                value={startTime}
+                value={startTime.toString()}
+                keyboardType="numeric"
                 onChangeText={(text) => setStartTime(text)}
               />
               <TextInput
@@ -421,7 +424,8 @@ const SharedCalendarBody = ({ token, socket }) => {
                 placeholderTextColor="#ccc"
                 keyboardAppearance="dark"
                 placeholder="Enter end time"
-                value={endTime}
+                value={endTime.toString()}
+                keyboardType="numeric"
                 onChangeText={(text) => setEndTime(text)}
               />
               <TouchableOpacity

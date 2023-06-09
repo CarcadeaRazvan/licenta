@@ -4,14 +4,16 @@ from flask_cors import CORS
 from flask_socketio import SocketIO
 from flask_jwt_extended import JWTManager
 from components.init import init
+from components.socket import socketio
 
-app = Flask(__name__, static_folder='../backend/profiles')
+app = Flask(__name__, static_folder='/profiles')
 app.config['JWT_SECRET_KEY'] = 'super-secret'
 CORS(app)
 jwt = JWTManager(app)
 bcrypt = Bcrypt(app)
-socketio = SocketIO(app, async_mode='threading')
-app.config['UPLOAD_FOLDER'] = 'E:/licenta/backend/profiles'
+# socketio = SocketIO(app, async_mode='threading')
+# app.config['UPLOAD_FOLDER'] = '/app/profiles'
+socketio.init_app(app, async_mode='threading')
 
 init()
 
@@ -43,4 +45,4 @@ from components.notifications import notifications_bp
 app.register_blueprint(notifications_bp, url_prefix='/notifications')
 
 if __name__ == '__main__':
-    socketio.run(app, debug=False, host='0.0.0.0', port=5000)
+    socketio.run(app, debug=False, host='0.0.0.0', port=5000, allow_unsafe_werkzeug=True)

@@ -3,7 +3,8 @@ from cryptography.fernet import Fernet
 import psycopg2
 from flask_socketio import emit
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from app import socketio
+# from app import socketio
+from components.socket import socketio
 import json
 from datetime import datetime
 import re

@@ -9,7 +9,6 @@
         "gradleCommand": ":app:assembleDebug"
       },
       "ios": {
-        "buildConfiguration": "Debug",
         "resourceClass": "m-medium"
       }
     },

@@ -1,13 +1,15 @@
 from flask import Blueprint, request, jsonify, request, send_from_directory
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from flask_jwt_extended.exceptions import JWTExtendedException
-from app import app
+# from app import app
 from werkzeug.utils import secure_filename
 import psycopg2
 import os
 from components.utils import establish_connection
 
 profile_bp = Blueprint('profile', __name__)
+
+upload_folder = os.environ.get('UPLOAD_FOLDER')
 
 @profile_bp.route('/', methods=['GET'])
 @jwt_required()
@@ -40,7 +42,7 @@ def get_photo():
 
 @profile_bp.route('/image/<name>')
 def display_files(name):
-    return send_from_directory(app.config["UPLOAD_FOLDER"], name)
+    return send_from_directory(upload_folder, name)
 
 @profile_bp.route('/upload', methods=['POST'])
 @jwt_required()
@@ -53,7 +55,7 @@ def upload_photo():
         return {'error': 'No file provided'}, 400
 
     filename = secure_filename(photo.filename)
-    photo.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+    photo.save(os.path.join(upload_folder, filename))
 
     user_id = get_jwt_identity()
 

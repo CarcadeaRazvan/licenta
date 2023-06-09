@@ -17,13 +17,7 @@ def get_username():
 @jwt_required()
 def get_user_ids():
     try:
-        conn = psycopg2.connect(
-            host="localhost",
-            database="mydatabase",
-            user="postgres",
-            password="admin",
-            port="5432"
-        )
+        conn = establish_connection()
 
         cursor = conn.cursor()
         cursor.execute("SELECT id, username FROM users")
@@ -40,7 +34,7 @@ def get_user_ids():
 
 def establish_connection():
     conn = psycopg2.connect(
-                host="localhost",
+                host="db",
                 database="mydatabase",
                 user="postgres",
                 password="admin",

@@ -2,7 +2,8 @@ from flask import Blueprint, request, jsonify
 import psycopg2
 from flask_socketio import emit
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from app import socketio
+# from app import socketio
+from components.socket import socketio
 from components.utils import establish_connection
 
 rewards_bp = Blueprint('rewards', __name__)

@@ -12,6 +12,32 @@ services:
       - "5432:5432"
     volumes:
       - db_data:/var/lib/postgresql/data/
+    networks:
+      mynetwork:
+        ipv4_address: 192.168.1.136
+
+  webserver:
+    build:
+      context: .
+    container_name: webserver
+    environment:
+      - UPLOAD_FOLDER=/app/profiles
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./backend/profiles:/app/profiles
+    depends_on:
+      - db
+    networks:
+      mynetwork:
+        ipv4_address: 192.168.1.137
+
+networks:
+  mynetwork:
+    ipam:
+      driver: default
+      config:
+        - subnet: 192.168.1.0/24
 
 volumes:
   db_data:
